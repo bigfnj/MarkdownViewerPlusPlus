@@ -1,0 +1,176 @@
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #1f2328;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.markdown-body {
+  box-sizing: border-box;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 32px;
+}
+
+.markdown-body > :first-child {
+  margin-top: 0;
+}
+
+.markdown-body::after {
+  content: "";
+  display: block;
+  height: calc(100vh - 48px);
+}
+
+.markdown-body h1,
+.markdown-body h2 {
+  padding-bottom: .3em;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.markdown-body h1 {
+  font-size: 2em;
+}
+
+.markdown-body h2 {
+  font-size: 1.5em;
+}
+
+.markdown-body h3 {
+  font-size: 1.25em;
+}
+
+.markdown-body a {
+  color: #0969da;
+}
+
+.markdown-body blockquote {
+  margin: 0 0 16px;
+  padding: 0 1em;
+  color: #59636e;
+  border-left: .25em solid #d0d7de;
+}
+
+.markdown-body pre {
+  margin: 0 0 16px;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 6px;
+  background: #f6f8fa;
+  color: #1f2328;
+  font: 13px/1.45 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+.markdown-body code {
+  padding: .2em .4em;
+  border-radius: 6px;
+  background: #afb8c133;
+  font: 85% ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+.markdown-body pre code {
+  padding: 0;
+  background: transparent;
+  font-size: 100%;
+}
+
+.markdown-body table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+  border-spacing: 0;
+  border-collapse: collapse;
+  margin: 0 0 16px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 6px 13px;
+  border: 1px solid #d0d7de;
+}
+
+.markdown-body tr:nth-child(2n) {
+  background: #f6f8fa;
+}
+
+.markdown-body input[type="checkbox"] {
+  margin: 0 .4em .25em -1.4em;
+  vertical-align: middle;
+}
+
+.mermaid {
+  margin: 16px 0;
+  text-align: center;
+}
+
+.markdown-body .mermaid-error {
+  padding: 12px 14px;
+  border: 1px solid #cf222e;
+  border-radius: 6px;
+  background: #ffebe9;
+  color: #82071e;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+    color: #1f2328;
+  }
+
+  .markdown-body {
+    max-width: none;
+    padding: 0;
+  }
+
+  .markdown-body::after {
+    display: none;
+    height: 0;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+  }
+
+  .markdown-body h1,
+  .markdown-body h2 {
+    border-color: #30363d;
+  }
+
+  .markdown-body a {
+    color: #58a6ff;
+  }
+
+  .markdown-body blockquote {
+    color: #8b949e;
+    border-left-color: #30363d;
+  }
+
+  .markdown-body pre,
+  .markdown-body tr:nth-child(2n) {
+    background: #161b22;
+    color: #e6edf3;
+  }
+
+  .markdown-body code {
+    background: #6e768166;
+  }
+
+  .markdown-body th,
+  .markdown-body td {
+    border-color: #30363d;
+  }
+
+  .markdown-body .mermaid-error {
+    border-color: #f85149;
+    background: #490202;
+    color: #ffdcd7;
+  }
+}

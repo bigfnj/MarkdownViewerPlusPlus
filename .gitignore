@@ -192,6 +192,7 @@ _pkginfo.txt
 
 # Others
 ClientBin/
+build/
 ~$*
 *~
 *.dbmdl
@@ -201,6 +202,20 @@ ClientBin/
 *.publishsettings
 node_modules/
 orleans.codegen.cs
+__pycache__/
+
+# Repo-local native dependency installers/caches
+.download-cache/
+third_party/cmark-gfm/
+MarkdownPlusPlus.Native/assets/mermaid/mermaid.min.js
+tools/nuget/nuget.exe
+tools/VERSIONS.txt
+
+# Generated native smoke outputs
+smoke-tests/*.html
+smoke-tests/*.pdf
+smoke-tests/* - Copy.md
+smoke-tests/*:Zone.Identifier
 
 # Since there are multiple workflows, uncomment next line to ignore bower_components
 # (https://github.com/github/gitignore/pull/1529#issuecomment-104372622)
@@ -276,3 +291,7 @@ __pycache__/
 /_site
 /Gemfile.lock
 /Gemfile
+CLAUDE.md
+AGENTS.md
+KILO.md
+.github/copilot-instructions.md

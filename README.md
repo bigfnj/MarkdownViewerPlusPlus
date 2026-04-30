@@ -1,6 +1,10 @@
 # MarkdownViewerPlusPlus [![Build status](https://ci.appveyor.com/api/projects/status/jkuuth039vioms74?svg=true)](https://ci.appveyor.com/project/nea/markdownviewerplusplus) [![GitHub license](https://img.shields.io/github/license/nea/MarkdownViewerPlusPlus.svg)](https://github.com/nea/MarkdownViewerPlusPlus/blob/master/LICENSE.md) [![GitHub (pre-)release](https://img.shields.io/badge/release-0.8.2-yellow.svg)](https://github.com/nea/MarkdownViewerPlusPlus/releases/tag/0.8.2) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/insanitydesign)
 A Notepad++ Plugin to view a Markdown file rendered on-the-fly
 
+## Native Rewrite
+
+A side-by-side native C++ rewrite named `Markdown++` lives in `MarkdownPlusPlus.Native/`. It uses WebView2, `cmark-gfm`, and bundled Mermaid, and is built with CMake/Visual Studio 2026. See `MarkdownPlusPlus.Native/README.md` and `BUILDING_NATIVE.md`.
+
 ## Features
 * Dockable panel (toggle) with a rendered HTML of the currently selected file/tab
 * CommonMark compliant ([0.28][4])
@@ -15,12 +19,12 @@ A Notepad++ Plugin to view a Markdown file rendered on-the-fly
   * Updated [Markdig][3] to v0.15.0, [PDFSharp][5] to v1.50.4845-RC2a and [HTMLRenderer][6] accordingly
   * Added a shortcut to _Options_ and _About_ to MarkdownViewerPanel
 * 0.8.1
-  * Fixed a bug cutting off text after 10000 characters (#60)  
+  * Fixed a bug cutting off text after 10000 characters (#60)
   * Changed parsing of custom CSS to recognize _@import_ statements and have them lead (#35)
 * 0.8.0
   * Changed CommonMark.net converter to [Markdig][3]
   * Updated [PDFSharp][5] and [HTMLRenderer][6] accordingly
-  
+
 Download the latest [release here][9]. For a full version history go [here][10].
 
 ## Installation
@@ -40,8 +44,8 @@ It has been tested under the following conditions
 * Windows 10 Professional (64-bit)
 
 ## Usage
-To open the MarkdownViewer++ you can 
-* click the toolbar icon ![Markdown icon](https://raw.githubusercontent.com/nea/MarkdownViewerPlusPlus/master/MarkdownViewerPlusPlus/Resources/markdown-16x16-solid.png), 
+To open the MarkdownViewer++ you can
+* click the toolbar icon ![Markdown icon](https://raw.githubusercontent.com/nea/MarkdownViewerPlusPlus/master/MarkdownViewerPlusPlus/Resources/markdown-16x16-solid.png),
 * use the shortcut _Ctrl+Shift+M_
 * or open it via the **Plugins** sub-menu
 
@@ -77,10 +81,10 @@ The MarkdownViewerPlusPlus is released under the MIT license.
 
 This Notepad++ plugin integrates the sources of multiple other libraries, because of issues with the library merging process. Credits and thanks to all the developers working on these great projects:
 * The plugin is based on the [Notepad++ PluginPack.net][2] by kbilsted provided under the Apache-2.0 license.
-* The renderer uses 
+* The renderer uses
   * [Markdig][3] by lunet-io provided under the BSD-2-Clause license
   * [HTMLRenderer.WinForms][6] by ArthurHub provided under the BSD-3-Clause license
-* The PDF Exporter uses 
+* The PDF Exporter uses
   * [PDFSharp][5] by empira Software GmbH provided under the MIT license
   * [HTMLRenderer.PdfSharp][6] by ArthurHub provided under the BSD-3-Clause license
 * The SVG renderer uses [SVG.NET][11] by vvvv provided under the Microsoft Public License
