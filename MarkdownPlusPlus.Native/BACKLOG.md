@@ -20,19 +20,21 @@ Status: complete.
 
 ### Native-Only Repository Cleanup
 
-Status: in progress.
+Status: complete.
 
 The native baseline is frozen. The cleanup pass removes historical source,
 obsolete build entry points, stale dependency notices, generated outputs, and
 product documentation that no longer describes the native plugin.
 
-Definition of done:
+Completed validation:
 
 - Root documentation describes only native `Markdown++`.
 - Native build from a clean checkout is reproducible with documented commands.
 - Release package contains only native runtime files.
 - Generated build/dependency/smoke outputs remain ignored.
-- `git status --short` shows only intentional source changes after validation.
+- Legacy C# plugin source, old solution/build files, obsolete notices, and
+  generated/session artifacts were removed from tracked source.
+- Cleanup committed as `36b02ed`.
 
 ## Feature Backlog
 

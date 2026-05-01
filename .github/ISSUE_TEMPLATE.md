@@ -10,6 +10,6 @@ _Please describe your issue and expected result_
 _If available_
 
 ### Environment
-* Notepad++ _X.Y.Z (x86/x64)_
-* MarkdownViewer++ _X.Y.Z_
-* Windows _7/8/10 (x86/x64)_
+* Notepad++ _X.Y.Z x64_
+* Markdown++ _X.Y.Z_
+* Windows _10/11 x64_
