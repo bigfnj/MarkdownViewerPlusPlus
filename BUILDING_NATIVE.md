@@ -138,8 +138,8 @@ smoke-tests/smoke-test.md
 
 ## Notes
 
-- The CMake target links the local WebView2 SDK from `packages/Microsoft.Web.WebView2.1.0.3912.50`.
-- The CMake target builds and links local `third_party/cmark-gfm` static libraries.
+- The CMake target links the generated WebView2 SDK from `packages/Microsoft.Web.WebView2.1.0.3912.50`.
+- The CMake target builds and links generated `third_party/cmark-gfm` static libraries.
 - The build copies `MarkdownPlusPlus.Native/assets` beside the DLL.
 - The runtime WebView2 Evergreen install is still a user-machine runtime requirement, not a repo-local dependency.
 - The native plugin is currently x64-only.

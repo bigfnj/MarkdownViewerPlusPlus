@@ -11,11 +11,13 @@ Install these through Visual Studio Installer:
 - Windows 10/11 SDK
 - NuGet package restore support
 
-These are Visual Studio workloads/components rather than repo-local tools, so they cannot be vendored into the project folder.
+These are Visual Studio workloads/components rather than repo-local tools, so
+they cannot be vendored into the project folder.
 
-## Repo-Local Installs
+## Repo-Local Generated Installs
 
-The following dependencies have been installed into the local repository filesystem:
+The dependency installer recreates these generated paths under the repository
+root:
 
 | Dependency | Version | Local path |
 |---|---:|---|
@@ -24,24 +26,36 @@ The following dependencies have been installed into the local repository filesys
 | Mermaid | 11.14.0 | `MarkdownPlusPlus.Native/assets/mermaid/mermaid.min.js` |
 | NuGet CLI | latest at install time | `tools/nuget/nuget.exe` |
 
-The WebView2 package is intentionally under the solution-level `packages` folder because the native `.vcxproj` imports its MSBuild props/targets from that location.
-
 To recreate the repo-local dependency install, run:
 
 ```powershell
 python .\tools\install-native-deps.py
 ```
 
-The CMake build is now the preferred native build path. See `BUILDING_NATIVE.md`.
+The installer patches generated `cmark-gfm` CMake compatibility metadata from
+older minimum versions to `3.10` because CMake 4+ / VS2026 rejects or warns on
+older compatibility declarations.
 
-The installer patches vendored `cmark-gfm` from `cmake_minimum_required(VERSION 3.0)` to `3.10` because CMake 4+ / VS2026 rejects or warns on older compatibility declarations.
+Generated dependency paths are ignored by Git. They are build inputs, not source
+files for this repository.
 
 ## Runtime Requirement
 
-The plugin uses the Evergreen Microsoft Edge WebView2 Runtime. It is not bundled. The native preview host detects a missing runtime and shows an install guidance message inside the dockable panel.
+The plugin uses the Evergreen Microsoft Edge WebView2 Runtime. It is not
+bundled. The native preview host detects a missing runtime and shows an install
+guidance message inside the dockable panel.
 
-## Current Native Integration Status
+## Notices
 
-The Windows/VS2026 native build path, menu-only persisted options, clipboard support, standalone HTML export, PDF export, and print support are implemented and manually accepted for the current practical-parity pass.
+- Markdown++ project code is MIT licensed. See `../LICENSE.md`.
+- Microsoft.Web.WebView2 SDK and runtime are distributed under Microsoft's
+  package/runtime terms. The generated NuGet package includes `LICENSE.txt` and
+  `NOTICE.txt`.
+- `cmark-gfm` is generated from the pinned GitHub release and includes its
+  upstream `COPYING` file in `third_party/cmark-gfm` after dependency install.
+- Mermaid is generated from the pinned npm package and is MIT licensed.
+- Notepad++ plugin API constants and message contracts are used for native
+  plugin integration.
 
-Use `SMOKE_CHECKLIST.md` for release-readiness validation after rebuilding and installing the native plugin.
+Use `SMOKE_CHECKLIST.md` for release-readiness validation after rebuilding and
+installing the native plugin.

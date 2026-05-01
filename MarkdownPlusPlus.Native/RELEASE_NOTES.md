@@ -2,7 +2,8 @@
 
 ## Native test build 0.1.0.0
 
-This is the first practical-parity native test build for the side-by-side `Markdown++` Notepad++ plugin.
+This is the first practical-parity native test build for the `Markdown++`
+Notepad++ plugin.
 
 ### Included
 
@@ -13,7 +14,7 @@ This is the first practical-parity native test build for the side-by-side `Markd
 - Visible inline Mermaid errors for malformed diagrams.
 - Local document virtual-host mapping for images and links.
 - Local Markdown link clicks open in Notepad++.
-- External web links open in the default browser.
+- External web links open through the default browser path.
 - Fragment-only anchor links scroll both preview and editor.
 - Source-line-based editor/preview scroll sync.
 - EOF spacer for end-of-document alignment.
@@ -29,7 +30,9 @@ This is the first practical-parity native test build for the side-by-side `Markd
 
 ### Runtime Requirement
 
-The Microsoft Edge WebView2 Evergreen Runtime must be installed on the user machine. The plugin detects a missing runtime and shows install guidance in the preview panel.
+The Microsoft Edge WebView2 Evergreen Runtime must be installed on the user
+machine. The plugin detects a missing runtime and shows install guidance in the
+preview panel.
 
 ### Package Contents
 
@@ -46,9 +49,9 @@ MarkdownPlusPlus/
       README.md
 ```
 
-### Known Deliberate Choices
+### Deliberate Choices
 
-- The legacy C# MarkdownViewerPlusPlus project remains in the repository.
-- The native Options dialog was rejected during testing and should not be reintroduced for this pass.
+- The native Options dialog was rejected during testing and should not be
+  reintroduced for this pass.
 - Native settings are direct plugin-menu commands.
 - The native build is x64-only for now.
