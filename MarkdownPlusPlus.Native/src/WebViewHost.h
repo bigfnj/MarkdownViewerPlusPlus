@@ -36,6 +36,7 @@ public:
     void SetLinkCallback(LinkCallback callback);
     void SetScrollRatio(double ratio);
     void SetScrollSourceLine(int sourceLine, double fallbackRatio, double anchorRatio);
+    void Reload();
     bool ShowPrintUi();
     bool PrintToPdf(const std::wstring& path);
     bool Ready() const { return ready_ && webView_ != nullptr && documentLoaded_; }

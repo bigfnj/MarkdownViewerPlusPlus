@@ -674,6 +674,12 @@ void WebViewHost::SetScrollSourceLine(int sourceLine, double fallbackRatio, doub
     ApplyPendingScrollRatio();
 }
 
+void WebViewHost::Reload() {
+    if (webView_) {
+        webView_->Reload();
+    }
+}
+
 bool WebViewHost::ShowPrintUi() {
     if (!ready_ || !webView_ || !documentLoaded_) {
         ShowMessage(L"Markdown++ print is available after the preview finishes loading.");

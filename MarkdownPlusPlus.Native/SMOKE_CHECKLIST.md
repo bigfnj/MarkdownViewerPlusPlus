@@ -3,7 +3,7 @@
 Use this after a Windows rebuild/install:
 
 ```powershell
-cd Z:\home\Vibe-Projects\MarkdownViewerPlusPlus
+cd Z:\home\bigfnj\projects\MarkdownViewerPlusPlus
 powershell -ExecutionPolicy Bypass -File .\tools\build-native.ps1 -Configuration Release -Install
 ```
 
@@ -13,7 +13,7 @@ Close Notepad++ before installing unless using `-ForceInstall`.
 
 - Open Notepad++ x64.
 - Confirm `Plugins > Markdown++` is present.
-- Open `Z:\home\Vibe-Projects\MarkdownViewerPlusPlus\smoke-tests\markdownplusplus-smoke.md`.
+- Open `Z:\home\bigfnj\projects\MarkdownViewerPlusPlus\smoke-tests\markdownplusplus-smoke.md`.
 - Confirm the preview auto-opens when auto-open is enabled.
 - Toggle `Plugins > Markdown++ > Markdown++` and confirm the dockable panel hides/shows.
 

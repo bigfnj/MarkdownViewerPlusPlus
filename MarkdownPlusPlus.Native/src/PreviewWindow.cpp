@@ -144,6 +144,12 @@ LRESULT PreviewWindow::HandleMessage(HWND hwnd, UINT message, WPARAM wParam, LPA
             Resize();
             return 0;
 
+        case WM_ACTIVATE:
+            if (LOWORD(wParam) != WA_INACTIVE) {
+                webView_.Reload();
+            }
+            return 0;
+
         case WM_NOTIFY: {
             const auto* header = reinterpret_cast<NMHDR*>(lParam);
             if (header && header->code == DMN_CLOSE && onClose_) {
