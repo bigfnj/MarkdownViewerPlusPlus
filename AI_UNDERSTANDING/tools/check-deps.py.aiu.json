@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "path": "tools/check-deps.py",
+  "sha1": "6c6b2a6137fb965666abb7b2b282e509fb7dbfec",
+  "purpose": "Local dev tool that reports whether newer versions of the three pinned native dependencies (mermaid, cmark-gfm, WebView2 SDK) are available upstream. Parses MERMAID_VERSION / CMARK_GFM_VERSION / WEBVIEW2_VERSION from tools/install-native-deps.py, queries the matching registries, and prints a pinned-vs-latest table. Informational only — bumping a pinned version still requires a manual edit to install-native-deps.py so v1.x releases stay reproducible and any breaking upstream change is caught by the user's normal test pass before tagging.",
+  "exports": [
+    "read_pinned() — returns {MERMAID_VERSION, CMARK_GFM_VERSION, WEBVIEW2_VERSION} parsed from install-native-deps.py",
+    "fetch_json(url, timeout) — minimal urllib wrapper that sets a User-Agent header",
+    "latest_mermaid() — registry.npmjs.org/mermaid/latest['version']",
+    "latest_cmark_gfm() — api.github.com/repos/github/cmark-gfm/releases/latest['tag_name'] with leading 'v' stripped",
+    "latest_webview2() — api.nuget.org/v3-flatcontainer/microsoft.web.webview2/index.json (filters '-' pre-release tags, takes last)",
+    "CHECKS tuple — (label, env-var name, fetcher) triples driving the report",
+    "main() — prints the comparison table; always returns exit code 0"
+  ],
+  "imports": [
+    "json",
+    "re",
+    "sys",
+    "urllib.request",
+    "pathlib.Path",
+    "__future__.annotations"
+  ],
+  "called_by": [],
+  "calls_out_to": [
+    "https://registry.npmjs.org/mermaid/latest",
+    "https://api.github.com/repos/github/cmark-gfm/releases/latest",
+    "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/index.json",
+    "filesystem read of tools/install-native-deps.py"
+  ],
+  "invariants": [
+    "Always exits 0 — never fails a build or hook when a registry is briefly unreachable; failures surface as 'fetch failed: <err>' in the table.",
+    "Pinned-version regex is anchored to ^NAME = \"...\" lines so only the literal constants at the top of install-native-deps.py are parsed; comments and other matches are ignored.",
+    "WebView2 selection filters out pre-release tags (any version containing '-') so 'latest' only reports stable upgrades."
+  ],
+  "gotchas": [
+    "If install-native-deps.py renames or reformats the version constants (e.g. uses single quotes, or moves them into a dict), the regex returns '?' and the script silently reports the pinned value as missing. Keep the constants as `NAME = \"value\"` at module scope.",
+    "GitHub's unauthenticated API gives 60 req/hour per IP — fine for human use, would need an Authorization header if folded into CI.",
+    "NuGet flat-container returns versions oldest-first by convention. The script trusts that ordering; if NuGet ever changes the contract this picks the wrong 'latest'."
+  ]
+}
