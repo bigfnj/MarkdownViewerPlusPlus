@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/PluginController.h",
+  "sha1": "cfea7b8ec0a982caefb64eddac066524dc9f30b3",
+  "purpose": "Declares the PluginController singleton that owns plugin state and orchestrates everything: the FuncItem command array, options load/save, the preview window lifecycle, Scintilla viewport subclassing, two-way scroll sync between editor and preview, the debounced re-render timer, and the debounce-delay submenu. Notepad++ talks to the controller via PluginExports.cpp.",
+  "exports": [
+    "class markdownplusplus::PluginController",
+    "static PluginController::Instance() -> PluginController&",
+    "PluginController::SetModule / Initialize / GetFunctions / Name / MessageProc / OnNotification / Shutdown",
+    "PluginController::TogglePreview / RefreshPreview / CopyRenderedHtml / ExportHtml / ExportPdf / PrintPreview / ShowAbout / ToggleAutoOpenMarkdown / ToggleMermaid / ToggleScrollSync",
+    "enum CommandIndex (ToggleCommand, RefreshCommand, CopyHtmlCommand, ExportHtmlCommand, ExportPdfCommand, PrintCommand, ToggleAutoOpenMarkdownCommand, ToggleScrollSyncCommand, ToggleMermaidCommand, AboutCommand, plus SeparatorOne-Four and CommandCount)"
+  ],
+  "imports": [
+    "NppApi.h",
+    "MarkdownRenderer.h",
+    "PluginOptions.h",
+    "PreviewWindow.h",
+    "<array>",
+    "<string>"
+  ],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/PluginController.cpp",
+    "MarkdownPlusPlus.Native/src/PluginExports.cpp"
+  ],
+  "calls_out_to": [],
+  "invariants": [
+    "Strict singleton via Instance(); module_, nppData_, and options must be set (SetModule then Initialize) before any TogglePreview/Render call uses them.",
+    "The commands_ array is sized to CommandCount and its layout is what gets handed to Notepad++ via getFuncsArray - changing the enum order changes the menu order.",
+    "Scintilla subclass refData is reinterpret_cast'd from `this`; the controller must outlive the subclass (Shutdown removes it).",
+    "renderDebounceTimer_ is a SetTimer(nullptr,...) id that must be KillTimer'd on Shutdown and before re-arming."
+  ],
+  "gotchas": [
+    "MessageProc currently always returns TRUE (consumes every WM_COMMAND) so it must not be reused for messages that need DefWindowProc-style handling.",
+    "Many bookkeeping fields exist purely to suppress sync feedback loops between editor and preview (suppressEditorToPreviewUntil_, suppressPreviewToEditorUntil_, lastEditor*, lastPreview*); maintain symmetry when touching scroll-sync code."
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/assets/preview.js",
+  "sha1": "45d8f363c524c6841fc471d9400cccaaddf5784a",
+  "purpose": "The WebView-side runtime. Wraps an IIFE that: (1) listens for scroll events and posts previewScroll {line,ratio,force} messages back to C++ via window.chrome.webview.postMessage, using data-sourcepos attributes that cmark-gfm emits to map scroll position back to a markdown source line; (2) handles in-document anchor and external link clicks (anchors scroll locally and notify C++; local file/relative links and external http/https links are forwarded as linkClick messages); (3) provides window.MarkdownPlusPlusPreview with scrollToRatio / scrollToSourceLine / currentScrollRatio / currentSourceLine / preparePdfExport / restorePdfExport / renderMermaid / replaceContent (called from C++ ExecuteScript to swap the article HTML without a full navigation); (4) initializes Mermaid (strict securityLevel, theme matching prefers-color-scheme, manual run after normalizing pre[lang=mermaid] / code.language-mermaid blocks).",
+  "exports": [
+    "window.MarkdownPlusPlusPreview.scrollToRatio(ratio)",
+    "window.MarkdownPlusPlusPreview.scrollToSourceLine(sourceLine, fallbackRatio, anchorRatio)",
+    "window.MarkdownPlusPlusPreview.currentScrollRatio()",
+    "window.MarkdownPlusPlusPreview.currentSourceLine()",
+    "window.MarkdownPlusPlusPreview.preparePdfExport() -> bool",
+    "window.MarkdownPlusPlusPreview.restorePdfExport()",
+    "window.MarkdownPlusPlusPreview.renderMermaid() -> Promise",
+    "window.MarkdownPlusPlusPreview.replaceContent(html, title, sourceLine, fallbackRatio, anchorRatio, revision) -> bool",
+    "Reads window.MarkdownPlusPlusOptions = { mermaidEnabled: bool }"
+  ],
+  "imports": [
+    "window.chrome.webview (host bridge)",
+    "window.mermaid (loaded by the preview document before this script)"
+  ],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/MarkdownRenderer.cpp (the preview document loads it via <script src=\"https://markdownplusplus.local/preview.js\">)",
+    "MarkdownPlusPlus.Native/src/WebViewHost.cpp (calls replaceContent / scrollToSourceLine / preparePdfExport / restorePdfExport via ExecuteScript)"
+  ],
+  "calls_out_to": [
+    "chrome.webview.postMessage (previewScroll / linkClick messages)",
+    "Mermaid API (window.mermaid.initialize / parse / run)"
+  ],
+  "invariants": [
+    "All rendered block elements that came out of cmark-gfm must carry a data-sourcepos='L:C-L:C' attribute - SOURCEPOS option in MarkdownRenderer ensures this. preview.js's source-line math falls back gracefully when the attribute is missing but scroll sync gets coarse.",
+    "replaceContent uses contentRevision/revision to ignore late completions from a superseded render; preserve this gate when modifying.",
+    "suppressScrollNotifyUntil is used to debounce ourselves: programmatic scroll-to operations push a window of ~220-650ms during which the scroll handler will not echo back to C++; this is the JS half of the cross-direction suppression in PluginController.",
+    "Mermaid uses securityLevel 'strict' (Mermaid sanitizes diagram input); do not switch to 'loose' without re-evaluating XSS risk for untrusted markdown."
+  ],
+  "gotchas": [
+    "data-mermaid-source is cached on each block so re-renders can re-parse from original source; normalizeMermaidBlocks rewrites <pre><code class=language-mermaid> into <pre class=mermaid> to match Mermaid 11's expectation.",
+    "preparePdfExport strips href attributes from links that would resolve via the markdownplusplus.document virtual host or via file: URIs, because PDF readers cannot follow those - restorePdfExport puts them back after PrintToPdf completes.",
+    "scrollToSourceLine re-runs at 0ms / 80ms / 300ms and on every <img> load to stabilize against asynchronous reflow caused by image loading.",
+    "Heading IDs are auto-assigned by slugifying textContent (lower-case, strip non-word, collapse hyphens) and disambiguated with -1/-2/... suffixes; matches GitHub-flavored anchors well enough for in-document links to work."
+  ]
+}

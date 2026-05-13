@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/PluginOptions.h",
+  "sha1": "4f63f437d9e30a21b3eaf5d5cdd07ca78096d0bd",
+  "purpose": "Declares the persisted plugin settings (mermaid on/off, scroll sync on/off, auto-open markdown on/off, render debounce in ms) and the PluginOptionsStore that round-trips them through a private INI file in Notepad++'s plugin config directory.",
+  "exports": [
+    "struct markdownplusplus::PluginOptions { mermaidEnabled=true, scrollSyncEnabled=true, autoOpenMarkdown=true, renderDebounceMs=140 }",
+    "class markdownplusplus::PluginOptionsStore",
+    "PluginOptionsStore(std::wstring path)",
+    "PluginOptionsStore::Path() const",
+    "PluginOptionsStore::Load() const -> PluginOptions",
+    "PluginOptionsStore::Save(const PluginOptions&) const",
+    "markdownplusplus::ClampRenderDebounceMs(int) -> int"
+  ],
+  "imports": [
+    "<string>"
+  ],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/PluginOptions.cpp",
+    "MarkdownPlusPlus.Native/src/PluginController.h",
+    "MarkdownPlusPlus.Native/src/PluginController.cpp"
+  ],
+  "calls_out_to": [],
+  "invariants": [
+    "ClampRenderDebounceMs clamps to [0, 1000]; both Load and Save run values through it.",
+    "An empty path_ disables persistence: Load returns defaults, Save is a no-op."
+  ],
+  "gotchas": []
+}

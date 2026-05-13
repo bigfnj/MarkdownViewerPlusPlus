@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/PluginController.cpp",
+  "sha1": "4568d1678d7c4937b909869b2acc21d0c489111f",
+  "purpose": "The heart of the plugin. Implements PluginController: registers the 14-entry FuncItem command array (Markdown++ toggle Ctrl+Shift+M, Refresh, Copy HTML, Export HTML, Export PDF, Print, Open-automatically/Sync/Mermaid toggles, About), reacts to NPPN_READY/NPPN_TBMODIFICATION/NPPN_BUFFERACTIVATED/NPPN_SHUTDOWN plus Scintilla SCN_MODIFIED/SCN_UPDATEUI, installs ComCtl32 subclass procs on both Scintilla views to detect viewport changes, debounces re-renders via SetTimer, runs two-way scroll sync between editor and preview with throttle + cross-direction suppression, dynamically inserts the Preview-update-delay submenu using NPPM_ALLOCATECMDID, resolves markdown link clicks (file/anchor/external), drives Export HTML / Export PDF / Print, and persists options through PluginOptionsStore.",
+  "exports": [
+    "PluginController::Instance / SetModule / Initialize / GetFunctions / Name / MessageProc / OnNotification / Shutdown",
+    "PluginController::TogglePreview / RefreshPreview / CopyRenderedHtml / ExportHtml / ExportPdf / PrintPreview / ShowAbout",
+    "PluginController::ToggleAutoOpenMarkdown / ToggleMermaid / ToggleScrollSync",
+    "PluginController::ScintillaSubclassProc / RenderDebounceTimerProc (Win32 callbacks)"
+  ],
+  "imports": [
+    "PluginController.h",
+    "ClipboardUtil.h",
+    "MarkdownRenderer.h",
+    "WinUtil.h",
+    "<commdlg.h>",
+    "<commctrl.h>",
+    "<shellapi.h>",
+    "<shlwapi.h>",
+    "<algorithm>",
+    "<cmath>",
+    "<cwctype>",
+    "<cstdlib>",
+    "<iterator>",
+    "<vector>"
+  ],
+  "called_by": [],
+  "calls_out_to": [
+    "Notepad++ NPPM_GETCURRENTSCINTILLA / NPPM_GETPLUGINSCONFIGDIR / NPPM_GETFULLCURRENTPATH / NPPM_GETCURRENTDIRECTORY / NPPM_GETFILENAME / NPPM_SETMENUITEMCHECK / NPPM_ALLOCATECMDID / NPPM_DOOPEN",
+    "Scintilla SCI_GETLENGTH / SCI_GETTEXT / SCI_GETFIRSTVISIBLELINE / SCI_GETLINECOUNT / SCI_LINESONSCREEN / SCI_VISIBLEFROMDOCLINE / SCI_DOCLINEFROMVISIBLE / SCI_GETCURRENTPOS / SCI_LINEFROMPOSITION / SCI_LINESCROLL",
+    "User32: GetMenu/GetSubMenu/AppendMenuW/InsertMenuW/GetMenuItemCount/GetMenuItemID/GetMenuItemInfoW/CheckMenuItem/CreatePopupMenu/DestroyMenu/DrawMenuBar/MessageBoxW/SendMessageW/SetTimer/KillTimer",
+    "Comctl32: SetWindowSubclass / RemoveWindowSubclass / DefSubclassProc",
+    "Comdlg32: GetSaveFileNameW (OPENFILENAMEW)",
+    "Shlwapi: PathCanonicalizeW / PathCreateFromUrlW / PathIsRelativeW / UrlUnescapeW / _wcsnicmp",
+    "Shell32: ShellExecuteW (for external https/http links)",
+    "Kernel32: CreateDirectoryW / GetTickCount64 / GetFileAttributesW",
+    "Markdown++ internals: MarkdownRenderer::BuildPreview/BuildStandaloneDocument, CopyHtmlToClipboard, PreviewWindow, PluginOptionsStore, WinUtil helpers"
+  ],
+  "invariants": [
+    "Instance() is the only way to access the controller and it is process-singleton.",
+    "RegisterCommands runs at most once (guarded by commandsRegistered_); GetFunctions calls it lazily so it works whether Notepad++ asks first via setInfo or via getFuncsArray.",
+    "Debounce submenu installation requires both NPPM_ALLOCATECMDID and a successful FindPluginMenu - both happen in EnsureDebounceSubmenu under NPPN_READY/NPPN_TBMODIFICATION.",
+    "Scroll-sync correctness depends on the suppress timers (suppressEditorToPreviewUntil_ / suppressPreviewToEditorUntil_, kCrossScrollSuppressMs=260ms) and the throttle (kScrollSyncThrottleMs=50ms); both directions must update the bookkeeping fields they read to avoid feedback loops.",
+    "Render debouncing uses SetTimer(hwnd=nullptr,...) with a static TIMERPROC that routes back through Instance() and the timer id stored in renderDebounceTimer_; CancelScheduledRender / Shutdown must KillTimer."
+  ],
+  "gotchas": [
+    "kDebounceDelaysMs is {0, 80, 140, 250, 500} - the submenu shows '0 ms (immediate)' for the first entry; changing the array changes both the submenu and the persisted-value validation surface.",
+    "ResolvePreviewLinkPath strips fragment/query, URL-decodes, handles file: URIs via PathCreateFromUrlW, canonicalizes Windows paths, and falls back to CombinePath against the current Notepad++ directory for relative links. Only markdown-extension files that exist are actually opened via NPPM_DOOPEN.",
+    "ChooseExportPath uses OFN_NOCHANGEDIR; without it GetSaveFileNameW would silently switch the process CWD and break later file-relative logic.",
+    "Editor scroll-ratio uses (lineCount - linesOnScreen) as the denominator with a min-of-1 clamp; for documents shorter than the viewport the ratio collapses to 0.",
+    "ExportPdf and PrintPreview both refuse if preview is not Ready and instead pop a 'try again after the preview finishes loading' dialog - this is by design because WebView2 PrintToPdf needs documentLoaded_=true."
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/MarkdownRenderer.cpp",
+  "sha1": "1b1d1689226a714ae5a805a16f6dfc0efa2e7721",
+  "purpose": "Implements the MarkdownRenderer facade. Drives cmark-gfm with SOURCEPOS + GITHUB_PRE_LANG + FOOTNOTES + STRIKETHROUGH_DOUBLE_TILDE + VALIDATE_UTF8 plus the table/strikethrough/autolink/tagfilter/tasklist extensions, then wraps the resulting HTML in two flavours: BuildPreview emits a CSP-locked document that loads CSS/JS/Mermaid via the markdownplusplus.local virtual host (used inside the WebView preview), BuildStandaloneDocument inlines the CSS and resolves assets via file:// URIs (used for HTML export).",
+  "exports": [
+    "MarkdownRenderer::BuildPreview(const PreviewDocumentRequest&) -> PreviewRenderResult",
+    "MarkdownRenderer::BuildDocument(const PreviewDocumentRequest&) -> std::wstring",
+    "MarkdownRenderer::BuildStandaloneDocument(const PreviewDocumentRequest&) -> std::wstring"
+  ],
+  "imports": [
+    "MarkdownRenderer.h",
+    "HtmlUtil.h",
+    "WinUtil.h",
+    "cmark-gfm.h",
+    "cmark-gfm-extension_api.h",
+    "cmark-gfm-core-extensions.h",
+    "<array>",
+    "<utility>"
+  ],
+  "called_by": [],
+  "calls_out_to": [
+    "cmark-gfm (cmark_parser_new / cmark_parser_attach_syntax_extension / cmark_parser_feed / cmark_parser_finish / cmark_render_html / cmark_node_free / cmark_parser_free / cmark_get_default_mem_allocator / cmark_find_syntax_extension / cmark_parser_get_syntax_extensions / cmark_gfm_core_extensions_ensure_registered)"
+  ],
+  "invariants": [
+    "Buffers allocated by cmark (the rendered HTML char*) must be freed through cmark's mem allocator's free, not free()/delete.",
+    "cmark_parser_finish must be called before reading the document; failure paths still free the parser.",
+    "BuildPreview uses the kDocumentBaseUri 'https://markdownplusplus.document/' as the <base href> for the article ONLY when request.baseDirectory is non-empty - this hooks into the virtual-host mapping set up in WebViewHost.",
+    "The CSP header in BuildPreview must allow the same hosts that WebViewHost actually maps (markdownplusplus.local for assets, markdownplusplus.document for the current file's directory)."
+  ],
+  "gotchas": [
+    "Markdown input is UTF-8 std::string; cmark validates UTF-8 (VALIDATE_UTF8) but invalid sequences are replaced rather than rejected.",
+    "BuildStandaloneDocument inlines CSS by reading preview.css from <assetRoot>/assets/preview.css at call time - if the asset folder is missing the export simply has no styling.",
+    "CMARK_OPT_SOURCEPOS adds data-sourcepos attributes that preview.js relies on for scroll-sync; removing it silently breaks scroll-sync."
+  ]
+}

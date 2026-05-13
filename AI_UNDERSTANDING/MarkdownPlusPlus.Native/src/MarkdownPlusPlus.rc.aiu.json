@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/MarkdownPlusPlus.rc",
+  "sha1": "fe0880d0ee904fe53d9b4796d9197238b7c84345",
+  "purpose": "Win32 resource script. Stamps the compiled MarkdownPlusPlus.dll with a VS_VERSION_INFO block (FILEVERSION/PRODUCTVERSION 0.1.0.0, CompanyName 'Markdown++', FileDescription 'Markdown++ native Notepad++ plugin', InternalName 'MarkdownPlusPlus', OriginalFilename 'MarkdownPlusPlus.dll') used by Windows for the Properties dialog and by Notepad++'s About dialog.",
+  "exports": [
+    "VS_VERSION_INFO resource (FileVersion 0.1.0.0, ProductVersion 0.1.0.0, lang 0x409 codepage 1200)"
+  ],
+  "imports": [
+    "resource.h",
+    "<windows.h>"
+  ],
+  "called_by": [],
+  "calls_out_to": [],
+  "invariants": [
+    "FileVersion / ProductVersion strings should be kept in sync with the CMake project version and the About-dialog version string in PluginController::ShowAbout."
+  ],
+  "gotchas": [
+    "Compiled by the RC compiler (enable_language(RC) in the inner CMakeLists). On non-Windows builds the CMakeLists short-circuits, so this file is never seen."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/assets/preview.css",
+  "sha1": "2bc9be21445492e719d057583e6373de8d9488bd",
+  "purpose": "Stylesheet loaded by the WebView preview document (via https://markdownplusplus.local/preview.css inside the WebView, or inlined when exporting HTML standalone). Provides a GitHub-like Markdown body style with light + dark schemes, a generous trailing pad (::after height = calc(100vh - 48px)) so the last line can scroll to the top of the viewport for scroll-sync accuracy, table/code/blockquote rules, and a .mermaid + .mermaid-error skin. @media print strips the trailing pad and max-width for clean printed/PDF output.",
+  "exports": [
+    "body",
+    ".markdown-body (and >:first-child / ::after)",
+    ".markdown-body h1 / h2 / h3 / a / blockquote / pre / code / pre code / table / th / td / tr:nth-child(2n) / input[type=checkbox]",
+    ".mermaid",
+    ".markdown-body .mermaid-error",
+    "@media print rules",
+    "@media (prefers-color-scheme: dark) overrides"
+  ],
+  "imports": [],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/MarkdownRenderer.cpp"
+  ],
+  "calls_out_to": [],
+  "invariants": [
+    "The trailing .markdown-body::after spacer is required for scroll-sync to be able to position the last paragraph at the top of the viewport - removing it breaks bottom-of-document scroll alignment.",
+    "Dark-mode is triggered by prefers-color-scheme, not by an in-app toggle; preview.js mirrors this when initializing Mermaid's theme."
+  ],
+  "gotchas": [
+    "The CSP set in MarkdownRenderer allows style-src https://markdownplusplus.local 'unsafe-inline'; only the linked preview.css is loaded over the local virtual host - inline <style> blocks from rendered markdown would be permitted but cmark-gfm tagfilter strips them."
+  ]
+}

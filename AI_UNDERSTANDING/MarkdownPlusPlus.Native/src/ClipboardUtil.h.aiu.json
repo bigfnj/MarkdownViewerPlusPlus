@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/ClipboardUtil.h",
+  "sha1": "02fe31f8159413ca3ba201e08aac21f0e6a783a1",
+  "purpose": "Declares CopyHtmlToClipboard, the single entry point used by the controller to push rendered HTML (CF_HTML registered format) plus a UTF-16 plain-text fallback onto the Windows clipboard.",
+  "exports": [
+    "markdownplusplus::CopyHtmlToClipboard(HWND owner, const std::wstring& articleHtml, const std::wstring& plainText) -> bool"
+  ],
+  "imports": [
+    "<windows.h>",
+    "<string>"
+  ],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/ClipboardUtil.cpp",
+    "MarkdownPlusPlus.Native/src/PluginController.cpp"
+  ],
+  "calls_out_to": [],
+  "invariants": [
+    "owner HWND must be a window owned by the calling thread because OpenClipboard binds the clipboard to that thread."
+  ],
+  "gotchas": []
+}

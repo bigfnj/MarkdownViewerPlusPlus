@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/WebViewHost.cpp",
+  "sha1": "da1aa050739390f0f010cc190cccfb7e8746cf0a",
+  "purpose": "Boots Microsoft Edge WebView2 and runs the actual rendering surface. Calls CoInitializeEx (APARTMENTTHREADED), probes for the WebView2 Evergreen runtime, builds a user-data folder under %LOCALAPPDATA%\\MarkdownPlusPlus\\WebView2 (with %TEMP% fallback), creates the environment + controller asynchronously, sets virtual host name 'markdownplusplus.local' -> plugin assets folder and 'markdownplusplus.document' -> markdown file's directory, hooks NavigationStarting / NewWindowRequested (cancels user navigation and forwards links to LinkCallback), NavigationCompleted (sets documentLoaded_ and applies pending scroll), WebMessageReceived (parses ad-hoc JSON for previewScroll {line,ratio,force} and linkClick {href}). NavigateToString stores the pending document and either reuses the existing page via window.MarkdownPlusPlusPreview.replaceContent or does a full NavigateToString. Implements ShowPrintUi via ICoreWebView2_16 and PrintToPdf via ICoreWebView2_7, plus runtime-missing diagnostic message overlay (clickable to open the WebView2 download page).",
+  "exports": [
+    "WebViewHost::~WebViewHost",
+    "WebViewHost::Create / Destroy / Resize / Reload",
+    "WebViewHost::NavigateToString",
+    "WebViewHost::SetScrollCallback / SetLinkCallback / SetScrollRatio / SetScrollSourceLine",
+    "WebViewHost::ShowPrintUi / PrintToPdf",
+    "WebViewHost::StartPrintToPdf / RestorePdfExportLinks (private)",
+    "WebViewHost::ApplyPendingDocument / ApplyPendingContentUpdate / ApplyPendingScrollRatio / HandleWebMessage / UpdateDocumentHostMapping / ShowMessage (private)"
+  ],
+  "imports": [
+    "WebViewHost.h",
+    "HtmlUtil.h",
+    "<shellapi.h>",
+    "<shlobj.h>",
+    "<algorithm>",
+    "<cstdio>",
+    "<cwchar>",
+    "<string>",
+    "<utility>",
+    "<vector>"
+  ],
+  "called_by": [],
+  "calls_out_to": [
+    "WebView2: GetAvailableCoreWebView2BrowserVersionString, CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2Environment::CreateCoreWebView2Controller, ICoreWebView2Controller::{get_CoreWebView2,put_Bounds,Close}, ICoreWebView2::{NavigateToString,ExecuteScript,Reload,add_NavigationStarting,add_NewWindowRequested,add_NavigationCompleted,add_WebMessageReceived}, ICoreWebView2_3::{SetVirtualHostNameToFolderMapping,ClearVirtualHostNameToFolderMapping}, ICoreWebView2_7::PrintToPdf, ICoreWebView2_16::ShowPrintUI",
+    "Microsoft::WRL::Callback (template Make for event handlers)",
+    "Ole32: CoInitializeEx / CoUninitialize / CoTaskMemFree",
+    "Shell32: SHGetKnownFolderPath(FOLDERID_LocalAppData), ShellExecuteW",
+    "Kernel32: GetTempPathW / CreateDirectoryW / GetFileAttributesW",
+    "User32: RegisterClassExW / CreateWindowExW / DestroyWindow / MoveWindow / SetWindowTextW / InvalidateRect / SendMessageW / MessageBoxW / DefWindowProcW / DrawTextW / FillRect / GetWindowTextW / GetWindowTextLengthW / SetCursor / LoadCursorW",
+    "Gdi32: CreateSolidBrush / DeleteObject / GetStockObject / SelectObject / SetBkMode / SetTextColor",
+    "Markdown++ HtmlUtil::EscapeScriptString"
+  ],
+  "invariants": [
+    "Create runs the bulk of its work inside two nested asynchronous WRL callbacks - the caller cannot assume the WebView is up immediately; use Ready() (which requires ready_ AND webView_ AND documentLoaded_) before printing/exporting.",
+    "pendingDocumentRevision_ increments on every NavigateToString; ExecuteScript completion handlers must compare against the current revision before re-navigating to avoid stomping a newer document.",
+    "Destroy must be called on the same thread that called Create (single-threaded apartment / WebView2 UI thread). It clears pending state, closes controller, releases ComPtrs, destroys the diagnostic message window, and calls CoUninitialize only if Create's CoInitializeEx returned S_OK.",
+    "Virtual host mapping for the document directory must be re-applied when documentRoot changes; UpdateDocumentHostMapping no-ops when mappedDocumentRoot_ already equals the new root.",
+    "Scroll callback signature is (sourceLine:int, ratio:double, force:bool) and is fired from the WebView UI thread.",
+    "ApplyPendingContentUpdate's ExecuteScript continuation also serves as the fallback: if window.MarkdownPlusPlusPreview.replaceContent returns false/exception (e.g. preview.js not yet loaded), it falls back to a full NavigateToString."
+  ],
+  "gotchas": [
+    "JSON parsing here is hand-rolled (TryParseJson{Double,Int,String,Bool}) and is NOT a real JSON parser - it only works because preview.js emits a fixed shape with no key collisions. Do not extend without rewriting the parser.",
+    "ClampScrollRatio: the test `!(ratio >= 0.0) && !(ratio <= 1.0)` is the NaN-safe form - NaN compares false to both, so NaN clamps to 0; legitimate values get clamped via std::clamp.",
+    "Both NavigationStarting and NewWindowRequested cancel/handle navigation when it is user-initiated and route through LinkCallback only if IsRoutablePreviewNavigation() (i.e. http/https/file: that is not the local asset host). Non-routable URIs are dropped.",
+    "MessageWindowProc (the diagnostic overlay) is clickable - WM_LBUTTONUP calls ShellExecute on the WebView2 download URL. Painted dark grey background (#1E1E1E) with light text.",
+    "WebView2 runtime missing -> environment creation returns failure; ShowMessage paints the diagnostic overlay over the preview area. WebView2 version probe is best-effort and only used to compose a better error message."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/WinUtil.cpp",
+  "sha1": "d6262540f7cdfd949ef44bd054dec64490531fb6",
+  "purpose": "Implements the WinUtil helpers. Utf8ToWide does a strict MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS) and falls back to CP_ACP for input that is not valid UTF-8; WideToUtf8 round-trips back. GetModuleDirectory resolves the calling DLL's directory by growing the buffer until GetModuleFileNameW fits. ReadUtf8FileAsWide slurps a file via std::ifstream and converts; WriteUtf8File uses _wfopen_s+fwrite. CombinePath wraps Shlwapi PathAppendW. PathToFileUri wraps Shlwapi UrlCreateFromPathW with the two-pass length probe.",
+  "exports": [
+    "Utf8ToWide(const std::string&) -> std::wstring",
+    "WideToUtf8(const std::wstring&) -> std::string",
+    "GetModuleDirectory(HINSTANCE) -> std::wstring",
+    "ReadUtf8FileAsWide(const std::wstring&) -> std::wstring",
+    "WriteUtf8File(const std::wstring&, const std::string&) -> bool",
+    "CombinePath(const std::wstring&, const std::wstring&) -> std::wstring",
+    "PathToFileUri(const std::wstring&) -> std::wstring"
+  ],
+  "imports": [
+    "WinUtil.h",
+    "<shlwapi.h>",
+    "<cstdio>",
+    "<fstream>",
+    "<iterator>",
+    "<vector>"
+  ],
+  "called_by": [],
+  "calls_out_to": [
+    "Kernel32: MultiByteToWideChar / WideCharToMultiByte / GetModuleFileNameW",
+    "Shlwapi: PathRemoveFileSpecW / PathAppendW / UrlCreateFromPathW",
+    "CRT: std::ifstream, _wfopen_s, fwrite, fclose, ferror"
+  ],
+  "invariants": [
+    "Utf8ToWide preserves the size by passing static_cast<int>(text.size()) (no null terminator), then sizes the wstring to the conversion result exactly.",
+    "WriteUtf8File returns true only if the entire byte buffer was written and ferror is clear.",
+    "PathToFileUri uses the two-pass UrlCreateFromPath idiom (probe with E_POINTER for required length, then call again with the buffer) - the probe must return E_POINTER for the call to succeed."
+  ],
+  "gotchas": [
+    "CombinePath uses a stack buffer of MAX_PATH (260) wide chars - longer combined paths get truncated silently. For full long-path support this would need the \\\\?\\ prefix and a larger buffer.",
+    "Utf8ToWide silently falls back to CP_ACP for invalid UTF-8 input; this means file contents declared UTF-8 but actually CP1252 will be read as CP1252 rather than failing - intentional tolerance for older Notepad++ buffers."
+  ]
+}

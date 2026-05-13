@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "path": "CMakePresets.json",
+  "sha1": "5e13824a6ed245f882403e20641a4a62589999c9",
+  "purpose": "CMake preset file (version 6, cmakeMinimumRequired 4.2.0). Defines a single configure preset 'vs2026-x64' that targets the 'Visual Studio 18 2026' generator with x64 architecture, binaryDir=build/cmake/vs2026-x64, and CMAKE_INSTALL_PREFIX=build/install/vs2026-x64. Build presets: 'vs2026-debug' (Debug), 'vs2026-release' (Release), 'vs2026-package-release' (Release + markdownplusplus_package target).",
+  "exports": [
+    "configurePreset: vs2026-x64",
+    "buildPreset: vs2026-debug",
+    "buildPreset: vs2026-release",
+    "buildPreset: vs2026-package-release (runs the markdownplusplus_package target)"
+  ],
+  "imports": [],
+  "called_by": [
+    "tools/build-native.ps1 (invokes `cmake --preset vs2026-x64` and `cmake --build --preset vs2026-{debug,release}`)"
+  ],
+  "calls_out_to": [
+    "Visual Studio 2026 generator"
+  ],
+  "invariants": [
+    "Generator string 'Visual Studio 18 2026' must match the installed VS version's CMake generator name - build-native.ps1 has no fallback.",
+    "binaryDir and install prefix paths are referenced by the install scripts (build/cmake/vs2026-x64/package/<Config>/MarkdownPlusPlus); changing them requires updating tools/install-native-plugin.ps1 too."
+  ],
+  "gotchas": [
+    "cmakeMinimumRequired here is 4.2.0 (newer than top-level CMakeLists's 3.24) because CMake 4 dropped support for compatibility floors below 3.5 - install-native-deps.py patches cmark-gfm's CMakeLists to raise its floor to 3.10 to avoid the warning."
+  ]
+}

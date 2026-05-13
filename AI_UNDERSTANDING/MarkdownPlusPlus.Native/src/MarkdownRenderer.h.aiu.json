@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/MarkdownRenderer.h",
+  "sha1": "8d4855f2f4fb47f997320c96efb2654a2f2c523a",
+  "purpose": "Declares the MarkdownRenderer facade (BuildPreview/BuildDocument/BuildStandaloneDocument) plus the PreviewDocumentRequest input and PreviewRenderResult output structs that pass markdown source, document title, asset/base directories, and the mermaid toggle from the controller into the cmark-gfm-based renderer.",
+  "exports": [
+    "struct markdownplusplus::PreviewDocumentRequest { markdownUtf8, title, assetRoot, baseDirectory, mermaidEnabled }",
+    "struct markdownplusplus::PreviewRenderResult { document, articleHtml, title }",
+    "class markdownplusplus::MarkdownRenderer",
+    "static MarkdownRenderer::BuildPreview(const PreviewDocumentRequest&) -> PreviewRenderResult",
+    "static MarkdownRenderer::BuildDocument(const PreviewDocumentRequest&) -> std::wstring",
+    "static MarkdownRenderer::BuildStandaloneDocument(const PreviewDocumentRequest&) -> std::wstring"
+  ],
+  "imports": [
+    "<string>"
+  ],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/MarkdownRenderer.cpp",
+    "MarkdownPlusPlus.Native/src/PluginController.h",
+    "MarkdownPlusPlus.Native/src/PluginController.cpp"
+  ],
+  "calls_out_to": [],
+  "invariants": [
+    "MarkdownRenderer is a static facade with no state; the three Build* methods are pure functions of the request.",
+    "BuildPreview returns the WebView-bound document (uses the markdownplusplus.local virtual host for CSS/JS); BuildStandaloneDocument inlines the CSS and resolves assets via file:// for HTML export."
+  ],
+  "gotchas": [
+    "PreviewDocumentRequest.markdownUtf8 is std::string (UTF-8) while title/assetRoot/baseDirectory are std::wstring (UTF-16); mixing them is intentional - markdown is passed through to cmark-gfm as raw UTF-8 bytes."
+  ]
+}

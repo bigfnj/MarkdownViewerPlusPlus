@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "path": "tools/build-native.ps1",
+  "sha1": "1fea6557c1eb1c5f9e572d3f3e591a29ada483ee",
+  "purpose": "PowerShell wrapper that runs the full native build pipeline end-to-end: (1) python tools\\install-native-deps.py to fetch WebView2/cmark-gfm/Mermaid/NuGet; (2) cmake --preset vs2026-x64; (3) cmake --build --preset vs2026-{debug|release}; (4) optionally build the markdownplusplus_package target; (5) optionally invoke install-native-plugin.ps1. Each step is wrapped by Invoke-LoggedStep which tees output into build\\logs\\<step>.log and throws on non-zero exit.",
+  "exports": [
+    "Parameters: -Configuration <Debug|Release> (default Release), -Package (switch), -Install (switch), -PluginsRoot <path>, -ForceInstall (switch)"
+  ],
+  "imports": [],
+  "called_by": [],
+  "calls_out_to": [
+    "python tools/install-native-deps.py",
+    "cmake --preset vs2026-x64",
+    "cmake --build --preset vs2026-{debug,release}",
+    "cmake --build .\\build\\cmake\\vs2026-x64 --config <Config> --target markdownplusplus_package",
+    "powershell -File .\\tools\\install-native-plugin.ps1",
+    "fs/file IO: build\\logs\\*.log"
+  ],
+  "invariants": [
+    "ErrorActionPreference is 'Stop' for the outer flow but is temporarily flipped to 'Continue' inside Invoke-LoggedStep so $LASTEXITCODE can be inspected after Tee-Object.",
+    "$repoRoot is resolved relative to $PSScriptRoot so the script works from any CWD."
+  ],
+  "gotchas": [
+    "If -Install is passed without -Package, Package is implicitly enabled (shouldPackage = $Package -or $Install).",
+    "The install step shells out to a child PowerShell with -ExecutionPolicy Bypass, so policy lockdown on the user's machine does not block automation."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/PreviewWindow.cpp",
+  "sha1": "3b968358f6a5021a7762cc62295a7b244b8cb92f",
+  "purpose": "Implements the Notepad++ dockable preview pane. Registers the 'MarkdownPlusPlusNativePreview' window class, creates the WS_CHILD HWND parented to Notepad++, hosts a WebViewHost in its client area, registers itself as a dockable dialog via NPPM_DMMREGASDCKDLG (DWS_DF_CONT_RIGHT default), and forwards Show/Hide via NPPM_DMMSHOW/NPPM_DMMHIDE. Watches WM_SIZE for resize, WM_ACTIVATE to force a WebView Reload when the pane regains focus (this is the 'blank content on window context switch' fix), WM_NOTIFY/DMN_CLOSE to fire the close callback, and WM_DESTROY for cleanup.",
+  "exports": [
+    "PreviewWindow::~PreviewWindow",
+    "PreviewWindow::Create / Destroy / Show / Hide / Resize",
+    "PreviewWindow::SetDocument / SetScrollCallback / SetLinkCallback / SetScrollRatio / SetScrollSourceLine",
+    "PreviewWindow::ShowPrintUi / PrintToPdf",
+    "PreviewWindow::WindowProc (static CALLBACK)",
+    "PreviewWindow::HandleMessage / RegisterDockableWindow (private)"
+  ],
+  "imports": [
+    "PreviewWindow.h",
+    "WinUtil.h",
+    "<utility>"
+  ],
+  "called_by": [],
+  "calls_out_to": [
+    "User32: RegisterClassExW / CreateWindowExW / DestroyWindow / DefWindowProcW / SetWindowLongPtrW / GetWindowLongPtrW / SendMessageW / LoadCursorW",
+    "Notepad++ NPPM_DMMSHOW / NPPM_DMMHIDE / NPPM_DMMREGASDCKDLG (with NppTbData)",
+    "Notepad++ dockable docking-manager notification DMN_CLOSE (1051)",
+    "Markdown++ WebViewHost (Create/Destroy/Resize/NavigateToString/SetScrollCallback/SetLinkCallback/Reload/ShowPrintUi/PrintToPdf)",
+    "WinUtil CombinePath / GetModuleDirectory (for the assets root passed to WebViewHost)"
+  ],
+  "invariants": [
+    "Create may be called only once per PreviewWindow instance - a second call short-circuits if hwnd_ is already set.",
+    "Both Destroy() and WM_DESTROY tear down the WebViewHost before clearing hwnd_; the dtor also calls Destroy so RAII is safe.",
+    "WindowProc routes via GWLP_USERDATA: WM_NCCREATE captures the `this` pointer from CREATESTRUCTW.lpCreateParams. Messages before WM_NCCREATE fall through to DefWindowProcW.",
+    "The pane is WS_CHILD and parented to the Notepad++ HWND; Notepad++ docking manager re-parents it as the user docks/floats."
+  ],
+  "gotchas": [
+    "DMN_CLOSE is the literal value 1051 - it is hard-coded here because it is not in NppApi.h. Keep them in sync if NppApi.h ever picks it up.",
+    "WM_ACTIVATE -> webView_.Reload() exists to work around a WebView2 bug where the page goes blank after a window-context switch (commit a2aefaa); removing it brings the regression back.",
+    "RegisterDockableWindow stores raw const wchar_t* pointers (pszName/pszModuleName) in NppTbData - the strings here are static literals so lifetime is fine; any future dynamic strings would need to outlive Notepad++'s read."
+  ]
+}

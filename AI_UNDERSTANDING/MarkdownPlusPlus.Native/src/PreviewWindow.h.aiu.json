@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/PreviewWindow.h",
+  "sha1": "f65e707e9230a74550ff340212df938edf0d8541",
+  "purpose": "Declares PreviewWindow, the Win32 child window that Notepad++ docks as the Markdown++ preview pane and that hosts the WebViewHost. Forwards lifecycle, scroll, link, print and PDF-export calls into the embedded WebViewHost.",
+  "exports": [
+    "class markdownplusplus::PreviewWindow",
+    "using CloseCallback = std::function<void()>",
+    "using ScrollCallback = WebViewHost::ScrollCallback",
+    "using LinkCallback = WebViewHost::LinkCallback",
+    "PreviewWindow::Create / Destroy / Show / Hide / Resize",
+    "PreviewWindow::SetDocument(document, articleHtml, title, documentRoot, initialSourceLine, initialScrollRatio, initialAnchorRatio, mermaidEnabled)",
+    "PreviewWindow::SetScrollCallback / SetLinkCallback / SetScrollRatio / SetScrollSourceLine",
+    "PreviewWindow::ShowPrintUi / PrintToPdf / Ready / Handle / Created"
+  ],
+  "imports": [
+    "NppApi.h",
+    "WebViewHost.h",
+    "<functional>",
+    "<string>"
+  ],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/PreviewWindow.cpp",
+    "MarkdownPlusPlus.Native/src/PluginController.h",
+    "MarkdownPlusPlus.Native/src/PluginController.cpp"
+  ],
+  "calls_out_to": [],
+  "invariants": [
+    "Non-copyable; owns the underlying HWND and WebViewHost. Destroy() / dtor must run on the UI thread that created the window.",
+    "Create() must be called before any Show/Hide/SetDocument; subsequent Create calls after a successful one short-circuit.",
+    "The CloseCallback is invoked when Notepad++ sends DMN_CLOSE through WM_NOTIFY (the dockable-window close button)."
+  ],
+  "gotchas": []
+}

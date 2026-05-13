@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/HtmlUtil.h",
+  "sha1": "34223b63f3d580675d66cae4c8a38f665fe20c3c",
+  "purpose": "Declares two narrow string-escape helpers used when stitching dynamic strings into the rendered HTML preview document and into the JavaScript bridge calls that update it.",
+  "exports": [
+    "markdownplusplus::EscapeHtml(const std::wstring& text) -> std::wstring",
+    "markdownplusplus::EscapeScriptString(const std::wstring& text) -> std::wstring"
+  ],
+  "imports": [
+    "<string>"
+  ],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/HtmlUtil.cpp",
+    "MarkdownPlusPlus.Native/src/MarkdownRenderer.cpp",
+    "MarkdownPlusPlus.Native/src/WebViewHost.cpp"
+  ],
+  "calls_out_to": [],
+  "invariants": [
+    "EscapeHtml escapes & < > \" '. EscapeScriptString additionally escapes \\, \\r, \\n, the U+2028/U+2029 line/paragraph separators that break JavaScript string literals, and unicode-escapes < > & to keep injected article HTML from terminating the surrounding <script>."
+  ],
+  "gotchas": []
+}

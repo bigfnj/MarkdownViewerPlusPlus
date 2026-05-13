@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/PluginOptions.cpp",
+  "sha1": "57fd33c22b35da113292dd29a433d5ea7e6e5298",
+  "purpose": "Implements PluginOptionsStore by reading/writing four keys ('MermaidEnabled', 'ScrollSyncEnabled', 'AutoOpenMarkdown', 'RenderDebounceMs') under section 'MarkdownPlusPlus' of the configured INI file via GetPrivateProfileIntW / WritePrivateProfileStringW. Also defines ClampRenderDebounceMs which constrains the debounce to [0, 1000] ms.",
+  "exports": [
+    "PluginOptionsStore::PluginOptionsStore(std::wstring path)",
+    "PluginOptionsStore::Load() const -> PluginOptions",
+    "PluginOptionsStore::Save(const PluginOptions&) const",
+    "ClampRenderDebounceMs(int) -> int"
+  ],
+  "imports": [
+    "PluginOptions.h",
+    "<windows.h>",
+    "<algorithm>",
+    "<utility>"
+  ],
+  "called_by": [],
+  "calls_out_to": [
+    "Kernel32: GetPrivateProfileIntW / WritePrivateProfileStringW (Windows private-profile INI APIs)"
+  ],
+  "invariants": [
+    "Both Load and Save clamp renderDebounceMs through ClampRenderDebounceMs so on-disk values can never exceed [0, 1000].",
+    "Empty path_ -> Load returns defaults, Save no-ops; callers rely on this for first-run before NPPM_GETPLUGINSCONFIGDIR is available."
+  ],
+  "gotchas": [
+    "WritePrivateProfileStringW caches changes in Windows' INI cache - changes may not be flushed to disk until the cache is forced or Notepad++ exits.",
+    "Booleans are stored as the strings \"0\" / \"1\" and read via GetPrivateProfileIntW with !=0; any non-zero integer counts as true."
+  ]
+}

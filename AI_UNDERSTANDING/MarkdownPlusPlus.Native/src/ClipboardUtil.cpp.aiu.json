@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/ClipboardUtil.cpp",
+  "sha1": "1a5b8af9d51fedfe664fee886bc78e962825f787",
+  "purpose": "Implements CopyHtmlToClipboard. Builds a CF_HTML payload (Version:0.9 header with StartHTML/EndHTML/StartFragment/EndFragment offsets pointing at a <!--StartFragment-->/<!--EndFragment-->-wrapped <article class=\"markdown-body\">), registers the 'HTML Format' clipboard format, and writes both that HTML payload and a CF_UNICODETEXT fallback to the clipboard via GlobalAlloc/SetClipboardData.",
+  "exports": [
+    "markdownplusplus::CopyHtmlToClipboard(HWND, const std::wstring& articleHtml, const std::wstring& plainText) -> bool"
+  ],
+  "imports": [
+    "ClipboardUtil.h",
+    "WinUtil.h",
+    "<cstdio>",
+    "<cstring>",
+    "<string>"
+  ],
+  "called_by": [],
+  "calls_out_to": [
+    "User32: OpenClipboard / EmptyClipboard / CloseClipboard / SetClipboardData",
+    "Kernel32: GlobalAlloc(GMEM_MOVEABLE) / GlobalLock / GlobalUnlock / GlobalFree",
+    "User32: RegisterClipboardFormatW(L\"HTML Format\")"
+  ],
+  "invariants": [
+    "The CF_HTML header offsets must be computed AFTER the header is sized; they are byte offsets from the start of the entire CF_HTML buffer, not from the inner HTML payload. The %09zu zero-padded fields keep the header length constant so the two-pass size computation works.",
+    "GlobalAlloc handles passed to SetClipboardData are transferred to the system on success - do NOT GlobalFree them in that case; only free on the failure path (this file does that correctly).",
+    "OpenClipboard/CloseClipboard must always be paired; CopyHtmlToClipboard does so."
+  ],
+  "gotchas": [
+    "If both SetClipboardHtml and SetClipboardUtf16Text fail the function returns false but the clipboard has already been emptied - callers should treat false as a hard failure.",
+    "The CF_HTML payload is UTF-8 even though Windows clipboard text APIs prefer UTF-16; that is per the HTML Format spec."
+  ]
+}

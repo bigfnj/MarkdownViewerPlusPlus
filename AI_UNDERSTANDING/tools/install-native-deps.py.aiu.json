@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "path": "tools/install-native-deps.py",
+  "sha1": "cb676e088f127dd8de44c533ea89ef325216235a",
+  "purpose": "Python 3 bootstrapper that downloads and stages the pinned native build dependencies into repo-local directories so the CMake build is fully offline-reproducible. Fetches Microsoft.Web.WebView2 1.0.3912.50 (NuGet nupkg, extracted to packages/Microsoft.Web.WebView2.<ver>), the latest nuget.exe to tools/nuget/, cmark-gfm 0.29.0.gfm.13 (GitHub tarball, extracted to third_party/cmark-gfm with a CMake-floor patch), and Mermaid 11.14.0 (npm tarball, extracts package/dist/mermaid.min.js to MarkdownPlusPlus.Native/assets/mermaid/mermaid.min.js). Uses a .download-cache directory for intermediate artifacts which it deletes on success.",
+  "exports": [
+    "main()",
+    "download(url, destination)",
+    "install_webview2(root, cache)",
+    "install_nuget(root)",
+    "install_cmark_gfm(root, cache)",
+    "patch_cmark_gfm_cmake(destination)",
+    "install_mermaid(root, cache)",
+    "Pinned versions: WEBVIEW2_VERSION=1.0.3912.50, CMARK_GFM_VERSION=0.29.0.gfm.13, MERMAID_VERSION=11.14.0"
+  ],
+  "imports": [
+    "json",
+    "shutil",
+    "tarfile",
+    "urllib.request",
+    "zipfile",
+    "pathlib.Path"
+  ],
+  "called_by": [
+    "tools/build-native.ps1"
+  ],
+  "calls_out_to": [
+    "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/<ver>/microsoft.web.webview2.<ver>.nupkg",
+    "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe",
+    "https://api.github.com/repos/github/cmark-gfm/tarball/<tag>",
+    "https://registry.npmjs.org/mermaid/<ver>",
+    "fs/file IO: packages/, tools/nuget/, third_party/cmark-gfm/, MarkdownPlusPlus.Native/assets/mermaid/, .download-cache/"
+  ],
+  "invariants": [
+    "Writes ONLY under the repository root - per the module docstring contract. No user/system locations are touched.",
+    "Idempotent: download() short-circuits when the destination file exists and is non-empty; install_webview2 returns if the extracted package_dir already exists.",
+    "install_cmark_gfm strips the top-level prefix from the tarball so files land directly under third_party/cmark-gfm; existing third_party/cmark-gfm is deleted first to avoid stale-file pollution.",
+    "patch_cmark_gfm_cmake raises cmark-gfm's cmake_minimum_required from 3.0 / 3.5 to 3.10 so CMake 4+ does not error on compatibility floor."
+  ],
+  "gotchas": [
+    "Bumping any of the three version constants requires verifying: (a) the WebView2 SDK still contains x64/WebView2LoaderStatic.lib and include/WebView2.h, (b) cmark-gfm still uses the same library targets (libcmark-gfm_static, libcmark-gfm-extensions_static), and (c) Mermaid still publishes package/dist/mermaid.min.js in the tarball.",
+    "The Mermaid tarball entry path 'package/dist/mermaid.min.js' is checked literally - Mermaid renaming the dist path would silently fail.",
+    "Uses urllib without certificate-pinning and follows redirects implicitly; assumes corporate proxies/MITM proxies are configured at the OS level."
+  ]
+}

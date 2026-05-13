@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/assets/mermaid/README.md",
+  "sha1": "f4f47da708fc50526ba05332581d61761e920ac6",
+  "purpose": "Documents the drop-in slot for the pinned Mermaid bundle. tools/install-native-deps.py downloads Mermaid 11.14.0 from npm and writes package/dist/mermaid.min.js into this directory; the preview loads it from https://markdownplusplus.local/mermaid/mermaid.min.js (or via file:// in standalone HTML export). Policy: 'latest as of build, pinned per plugin release.'",
+  "exports": [
+    "Convention: drop mermaid.min.js next to this README"
+  ],
+  "imports": [],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/MarkdownRenderer.cpp (references mermaid/mermaid.min.js in both preview and standalone documents)",
+    "tools/install-native-deps.py (writes mermaid.min.js into this folder)"
+  ],
+  "calls_out_to": [],
+  "invariants": [
+    "The file name must be exactly 'mermaid.min.js' - both MarkdownRenderer.cpp and the install script hard-code that path."
+  ],
+  "gotchas": [
+    "mermaid.min.js itself is not checked into git (it is downloaded by install-native-deps.py); a fresh clone must run that script before mermaid will render."
+  ]
+}

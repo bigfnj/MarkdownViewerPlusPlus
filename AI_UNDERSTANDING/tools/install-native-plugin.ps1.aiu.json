@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "path": "tools/install-native-plugin.ps1",
+  "sha1": "ca3507e4f08208e21774026a7ee2916b6c786494",
+  "purpose": "Copies the freshly built Markdown++ plugin package (build\\cmake\\vs2026-x64\\package\\<Config>\\MarkdownPlusPlus) into the Notepad++ plugins folder (auto-detected via $env:ProgramFiles\\Notepad++\\plugins, falling back to ${env:ProgramFiles(x86)}\\Notepad++\\plugins, or -PluginsRoot override). Refuses to run if notepad++.exe is running (unless -Force). Deletes the existing MarkdownPlusPlus subfolder contents before copying so stale files are not left behind.",
+  "exports": [
+    "Parameters: -Configuration <Debug|Release> (default Release), -PluginsRoot <path>, -Force (switch)",
+    "Resolve-PluginsRoot helper"
+  ],
+  "imports": [],
+  "called_by": [
+    "tools/build-native.ps1"
+  ],
+  "calls_out_to": [
+    "Get-Process -Name notepad++",
+    "fs/file IO: copies build\\cmake\\vs2026-x64\\package\\<Config>\\MarkdownPlusPlus -> <PluginsRoot>\\MarkdownPlusPlus"
+  ],
+  "invariants": [
+    "Target folder is wiped before copy: 'Get-ChildItem -LiteralPath $targetDir -Force | Remove-Item -Recurse -Force' - so any out-of-band files placed there manually are lost on every install.",
+    "Throws if the package folder is missing (the user has not built with -Package yet) and throws if Notepad++ is running without -Force."
+  ],
+  "gotchas": [
+    "Resolve-PluginsRoot returns the FIRST candidate path even if Test-Path is false for all of them (final fallback: $candidates[0]) - so on a machine where neither ProgramFiles nor ProgramFiles(x86) has Notepad++\\plugins, the script will try to copy into a non-existent ProgramFiles path and fail late.",
+    "Detection relies on the process being named exactly 'notepad++' (without .exe); portable Notepad++ launchers that rename the executable can sneak past the safety check."
+  ]
+}

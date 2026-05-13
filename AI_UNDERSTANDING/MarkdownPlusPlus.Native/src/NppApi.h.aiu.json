@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/NppApi.h",
+  "sha1": "211b657dff515ae3ce5f86f727a145d513e84ed8",
+  "purpose": "Vendored subset of the Notepad++ plugin C API: NPPM_* / NPPN_* / Scintilla SCI_* / SCN_* / SC_MOD_*/SC_UPDATE_* message constants plus FuncItem, NppData, NppTbData, SCNotification, ShortcutKey, and the PluginCommand callback typedef. Lets Markdown++ talk to Notepad++ without pulling in Notepad++ source headers.",
+  "exports": [
+    "namespace markdownplusplus::npp",
+    "kFuncItemNameLength",
+    "kNppMsg",
+    "kRunCommandUser",
+    "NPPM_GETCURRENTSCINTILLA / NPPM_DMMSHOW / NPPM_DMMHIDE / NPPM_DMMREGASDCKDLG / NPPM_SETMENUITEMCHECK / NPPM_GETPLUGINSCONFIGDIR / NPPM_DOOPEN / NPPM_ALLOCATECMDID / NPPM_GETFULLCURRENTPATH / NPPM_GETCURRENTDIRECTORY / NPPM_GETFILENAME",
+    "NPPN_FIRST / NPPN_READY / NPPN_TBMODIFICATION / NPPN_SHUTDOWN / NPPN_BUFFERACTIVATED",
+    "SCI_GETLENGTH / SCI_GETCURRENTPOS / SCI_GETTEXT / SCI_GETFIRSTVISIBLELINE / SCI_GETLINECOUNT / SCI_LINEFROMPOSITION / SCI_LINESCROLL / SCI_LINESONSCREEN / SCI_VISIBLEFROMDOCLINE / SCI_DOCLINEFROMVISIBLE",
+    "SC_MOD_INSERTTEXT / SC_MOD_DELETETEXT / SC_UPDATE_SELECTION / SC_UPDATE_CONTENT / SC_UPDATE_V_SCROLL / SC_UPDATE_H_SCROLL / SCN_UPDATEUI / SCN_MODIFIED",
+    "DWS_DF_CONT_RIGHT",
+    "struct NppData",
+    "struct ShortcutKey",
+    "struct FuncItem",
+    "struct NppTbData",
+    "struct SCNotification",
+    "using PluginCommand = void (*)()"
+  ],
+  "imports": [
+    "<windows.h>"
+  ],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/PluginController.h",
+    "MarkdownPlusPlus.Native/src/PluginController.cpp",
+    "MarkdownPlusPlus.Native/src/PluginExports.cpp",
+    "MarkdownPlusPlus.Native/src/PreviewWindow.h",
+    "MarkdownPlusPlus.Native/src/PreviewWindow.cpp"
+  ],
+  "calls_out_to": [
+    "Notepad++ plugin ABI (FuncItem array exported via getFuncsArray; messages sent with SendMessage to the Notepad++ window)",
+    "Scintilla SCI_* / SCN_* message protocol"
+  ],
+  "invariants": [
+    "Layouts of NppData, NppTbData, FuncItem, ShortcutKey and SCNotification must match Notepad++ exactly or the plugin ABI crashes Notepad++.",
+    "kFuncItemNameLength (64) is the Notepad++-defined fixed-size wchar buffer used for menu item names; do not change.",
+    "Message constants must stay numerically equal to Notepad++'s real NPPM_/NPPN_/SCI_/SCN_ enums."
+  ],
+  "gotchas": [
+    "This file is a hand-maintained subset; if Notepad++ adds messages the plugin needs, they must be added here too (not pulled from a Notepad++ header).",
+    "FuncItem._cmdID is filled in by Notepad++ after getFuncsArray returns - do not assume it is non-zero until after NPPN_READY/NPPN_TBMODIFICATION."
+  ]
+}

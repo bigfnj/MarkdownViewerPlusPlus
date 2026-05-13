@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "path": "MarkdownPlusPlus.Native/src/WebViewHost.h",
+  "sha1": "95ace33bd45c2598b8a1805737453e0498fdb027",
+  "purpose": "Declares WebViewHost, the wrapper that creates the Microsoft Edge WebView2 environment/controller, navigates it to the rendered HTML document, manages virtual host mappings (markdownplusplus.local for plugin assets, markdownplusplus.document for the markdown file's directory), routes webMessage scroll/link events back to the C++ layer via callbacks, and drives ShowPrintUI / PrintToPdf.",
+  "exports": [
+    "class markdownplusplus::WebViewHost",
+    "using ScrollCallback = std::function<void(int, double, bool)> (sourceLine, ratio, force)",
+    "using LinkCallback = std::function<void(const std::wstring&)>",
+    "WebViewHost::Create(HWND parent, const std::wstring& assetRoot) -> HRESULT",
+    "WebViewHost::Destroy / Resize / Reload",
+    "WebViewHost::NavigateToString(document, articleHtml, title, documentRoot, initialSourceLine, initialScrollRatio, initialAnchorRatio, mermaidEnabled)",
+    "WebViewHost::SetScrollCallback / SetLinkCallback / SetScrollRatio / SetScrollSourceLine",
+    "WebViewHost::ShowPrintUi / PrintToPdf / Ready"
+  ],
+  "imports": [
+    "<windows.h>",
+    "<wrl.h>",
+    "<WebView2.h>",
+    "<functional>",
+    "<string>"
+  ],
+  "called_by": [
+    "MarkdownPlusPlus.Native/src/WebViewHost.cpp",
+    "MarkdownPlusPlus.Native/src/PreviewWindow.h",
+    "MarkdownPlusPlus.Native/src/PreviewWindow.cpp"
+  ],
+  "calls_out_to": [],
+  "invariants": [
+    "Non-copyable; owns ComPtr<ICoreWebView2Environment/Controller/WebView2> and registered event tokens. Destroy() releases them in the right order and undoes CoInitializeEx.",
+    "Ready() is true only once the controller is created (ready_), the webView_ ComPtr is non-null, AND a document has been navigated (documentLoaded_) - all three matter for Export PDF / Print preconditions.",
+    "Scroll/link callbacks are invoked from WebView2 message-pump callbacks on the UI thread - do not block."
+  ],
+  "gotchas": [
+    "pendingDocumentRevision_ guards against stale ExecuteScript continuations re-navigating after a newer document arrived; preserve revision-equality checks in ApplyPendingContentUpdate.",
+    "The header includes <WebView2.h> from the NuGet-extracted SDK at packages/Microsoft.Web.WebView2.<ver>/build/native/include - missing SDK breaks the build."
+  ]
+}
