@@ -35,6 +35,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Set up CMake (4.x — required by CMakePresets.json)
+        uses: lukka/get-cmake@latest
+
       - name: Resolve version
         id: version
         shell: pwsh
