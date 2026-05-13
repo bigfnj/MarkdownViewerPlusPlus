@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/PluginController.cpp",
-  "sha1": "4568d1678d7c4937b909869b2acc21d0c489111f",
+  "sha1": "8d11699892e0ea591e4349b94a746f4b4c3280fa",
   "purpose": "The heart of the plugin. Implements PluginController: registers the 14-entry FuncItem command array (Markdown++ toggle Ctrl+Shift+M, Refresh, Copy HTML, Export HTML, Export PDF, Print, Open-automatically/Sync/Mermaid toggles, About), reacts to NPPN_READY/NPPN_TBMODIFICATION/NPPN_BUFFERACTIVATED/NPPN_SHUTDOWN plus Scintilla SCN_MODIFIED/SCN_UPDATEUI, installs ComCtl32 subclass procs on both Scintilla views to detect viewport changes, debounces re-renders via SetTimer, runs two-way scroll sync between editor and preview with throttle + cross-direction suppression, dynamically inserts the Preview-update-delay submenu using NPPM_ALLOCATECMDID, resolves markdown link clicks (file/anchor/external), drives Export HTML / Export PDF / Print, and persists options through PluginOptionsStore.",
   "exports": [
     "PluginController::Instance / SetModule / Initialize / GetFunctions / Name / MessageProc / OnNotification / Shutdown",

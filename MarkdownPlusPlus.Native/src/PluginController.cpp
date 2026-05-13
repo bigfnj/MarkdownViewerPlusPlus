@@ -390,7 +390,7 @@ void PluginController::PrintPreview() {
 void PluginController::ShowAbout() {
     MessageBoxW(
         nppData_._nppHandle,
-        L"Markdown++ native preview\nVersion 0.1.0\n\nRenderer: WebView2\nMarkdown engine: cmark-gfm\nMermaid: bundled/offline\nExports: HTML, PDF, clipboard, print",
+        L"Markdown++ native preview\nVersion 1.0.0\n\nRenderer: WebView2\nMarkdown engine: cmark-gfm\nMermaid: bundled/offline\nExports: HTML, PDF, clipboard, print",
         kPluginName,
         MB_OK | MB_ICONINFORMATION);
 }
