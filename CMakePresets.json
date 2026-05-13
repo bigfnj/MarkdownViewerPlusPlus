@@ -20,6 +20,21 @@
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/vs2026-x64",
         "MARKDOWNPP_BUILD_NATIVE": "ON"
       }
+    },
+    {
+      "name": "vs2022-x64",
+      "displayName": "Visual Studio 2022 x64",
+      "description": "Portable preset for stable Visual Studio 2022 — used by the GitHub Actions release workflow (windows-latest runner) since VS2026 preview is not on hosted runners.",
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "binaryDir": "${sourceDir}/build/cmake/vs2022-x64",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/vs2022-x64",
+        "MARKDOWNPP_BUILD_NATIVE": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -39,6 +54,27 @@
       "name": "vs2026-package-release",
       "displayName": "VS2026 Package Release",
       "configurePreset": "vs2026-x64",
+      "configuration": "Release",
+      "targets": [
+        "markdownplusplus_package"
+      ]
+    },
+    {
+      "name": "vs2022-debug",
+      "displayName": "VS2022 Debug",
+      "configurePreset": "vs2022-x64",
+      "configuration": "Debug"
+    },
+    {
+      "name": "vs2022-release",
+      "displayName": "VS2022 Release",
+      "configurePreset": "vs2022-x64",
+      "configuration": "Release"
+    },
+    {
+      "name": "vs2022-package-release",
+      "displayName": "VS2022 Package Release",
+      "configurePreset": "vs2022-x64",
       "configuration": "Release",
       "targets": [
         "markdownplusplus_package"

@@ -1,26 +1,34 @@
 {
   "schema": 1,
   "path": "CMakePresets.json",
-  "sha1": "5e13824a6ed245f882403e20641a4a62589999c9",
-  "purpose": "CMake preset file (version 6, cmakeMinimumRequired 4.2.0). Defines a single configure preset 'vs2026-x64' that targets the 'Visual Studio 18 2026' generator with x64 architecture, binaryDir=build/cmake/vs2026-x64, and CMAKE_INSTALL_PREFIX=build/install/vs2026-x64. Build presets: 'vs2026-debug' (Debug), 'vs2026-release' (Release), 'vs2026-package-release' (Release + markdownplusplus_package target).",
+  "sha1": "29aacd3e5bb79ad57bcdc30ca41e1b068432fb7a",
+  "purpose": "CMake preset file (version 6, cmakeMinimumRequired 4.2.0). Two configure presets: 'vs2026-x64' (Visual Studio 18 2026 generator, used by local devs via tools/build-native.ps1) and 'vs2022-x64' (Visual Studio 17 2022 generator, used by the GitHub Actions release workflow since VS2026 preview is not on hosted runners). Each has matching Debug/Release/Package-Release buildPresets that drive cmake builds and the markdownplusplus_package custom target.",
   "exports": [
     "configurePreset: vs2026-x64",
+    "configurePreset: vs2022-x64",
     "buildPreset: vs2026-debug",
     "buildPreset: vs2026-release",
-    "buildPreset: vs2026-package-release (runs the markdownplusplus_package target)"
+    "buildPreset: vs2026-package-release (runs the markdownplusplus_package target)",
+    "buildPreset: vs2022-debug",
+    "buildPreset: vs2022-release",
+    "buildPreset: vs2022-package-release (runs the markdownplusplus_package target)"
   ],
   "imports": [],
   "called_by": [
-    "tools/build-native.ps1 (invokes `cmake --preset vs2026-x64` and `cmake --build --preset vs2026-{debug,release}`)"
+    "tools/build-native.ps1 (local dev — invokes `cmake --preset vs2026-x64` and `cmake --build --preset vs2026-{debug,release}`)",
+    ".github/workflows/release.yml (CI — invokes `cmake --preset vs2022-x64` and `cmake --build --preset vs2022-release` on tag push)"
   ],
   "calls_out_to": [
-    "Visual Studio 2026 generator"
+    "Visual Studio 2026 generator (local)",
+    "Visual Studio 2022 generator (CI / portable)"
   ],
   "invariants": [
-    "Generator string 'Visual Studio 18 2026' must match the installed VS version's CMake generator name - build-native.ps1 has no fallback.",
-    "binaryDir and install prefix paths are referenced by the install scripts (build/cmake/vs2026-x64/package/<Config>/MarkdownPlusPlus); changing them requires updating tools/install-native-plugin.ps1 too."
+    "Generator strings 'Visual Studio 18 2026' and 'Visual Studio 17 2022' must match the installed VS version's CMake generator name on each environment.",
+    "binaryDir and install prefix paths are referenced downstream — build/cmake/<preset>/package/<Config>/MarkdownPlusPlus. Changing them requires updating tools/install-native-plugin.ps1 and the release workflow.",
+    "Both presets must remain functionally equivalent (same MARKDOWNPP_BUILD_NATIVE=ON, same x64 arch) so binaries built by either are interchangeable."
   ],
   "gotchas": [
-    "cmakeMinimumRequired here is 4.2.0 (newer than top-level CMakeLists's 3.24) because CMake 4 dropped support for compatibility floors below 3.5 - install-native-deps.py patches cmark-gfm's CMakeLists to raise its floor to 3.10 to avoid the warning."
+    "cmakeMinimumRequired here is 4.2.0 (newer than top-level CMakeLists's 3.24) because CMake 4 dropped support for compatibility floors below 3.5 - install-native-deps.py patches cmark-gfm's CMakeLists to raise its floor to 3.10 to avoid the warning.",
+    "The vs2022 preset exists for portability and CI builds — local devs should keep using vs2026 to stay aligned with build-native.ps1. If the local install scripts ever start consuming the vs2022 binaryDir, install-native-plugin.ps1's hard-coded vs2026-x64 path needs the matching change."
   ]
 }

@@ -1,0 +1,129 @@
+name: Release
+
+# Fires when a version tag is pushed (e.g. `git tag v0.1.0 && git push --tags`).
+# Builds the native plugin on a Windows runner, packages the output, and
+# attaches the zip to a GitHub release named after the tag.
+#
+# Workflow Dispatch is also enabled so you can do a dry-run build (no release)
+# from the Actions UI without cutting a tag.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build + package without creating a release"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write  # required for softprops/action-gh-release to create the release
+
+jobs:
+  build:
+    name: Build & Release (Windows x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/v*') {
+              $version = $env:GITHUB_REF_NAME -replace '^v', ''
+              $isTag = 'true'
+          } else {
+              $version = 'dev-' + ($env:GITHUB_SHA.Substring(0, 7))
+              $isTag = 'false'
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "is_tag=$isTag"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Building version: $version (is_tag=$isTag)"
+
+      - name: Verify tag matches CMakeLists.txt VERSION
+        if: steps.version.outputs.is_tag == 'true'
+        shell: pwsh
+        run: |
+          $cmakeText = Get-Content -Raw CMakeLists.txt
+          if ($cmakeText -notmatch 'VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)') {
+              throw "Could not find VERSION x.y.z in CMakeLists.txt"
+          }
+          $cmakeVersion = $Matches[1]
+          $tagVersion = "${{ steps.version.outputs.version }}"
+          if ($cmakeVersion -ne $tagVersion) {
+              throw "Tag v$tagVersion does not match CMakeLists.txt VERSION $cmakeVersion. Bump CMakeLists.txt before tagging."
+          }
+          Write-Host "OK: tag and CMakeLists.txt both at $cmakeVersion"
+
+      - name: Install native dependencies (WebView2 SDK, cmark-gfm, mermaid)
+        shell: pwsh
+        run: python tools/install-native-deps.py
+
+      - name: Configure CMake (vs2022-x64)
+        shell: pwsh
+        run: cmake --preset vs2022-x64
+
+      - name: Build (Release)
+        shell: pwsh
+        run: cmake --build --preset vs2022-release
+
+      - name: Package
+        shell: pwsh
+        run: cmake --build build/cmake/vs2022-x64 --config Release --target markdownplusplus_package
+
+      - name: Verify package contents
+        shell: pwsh
+        run: |
+          $pkgDir = "build/cmake/vs2022-x64/package/Release/MarkdownPlusPlus"
+          if (-not (Test-Path "$pkgDir/MarkdownPlusPlus.dll")) {
+              throw "Expected MarkdownPlusPlus.dll not found under $pkgDir"
+          }
+          if (-not (Test-Path "$pkgDir/assets")) {
+              throw "Expected assets/ directory not found under $pkgDir"
+          }
+          Write-Host "Package contents:"
+          Get-ChildItem -Recurse $pkgDir | Select-Object FullName, Length
+
+      - name: Create zip
+        id: zip
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $zipName = "MarkdownPlusPlus-$version-win-x64.zip"
+          $pkgDir  = "build/cmake/vs2022-x64/package/Release/MarkdownPlusPlus"
+          # Compress the MarkdownPlusPlus folder so users get a top-level
+          # MarkdownPlusPlus/ directory inside the zip, matching the layout
+          # Notepad++ expects under plugins/.
+          Compress-Archive -Path $pkgDir -DestinationPath $zipName -CompressionLevel Optimal
+          "zip_name=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Created $zipName"
+
+      - name: Upload artifact (always — even for dry-runs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.zip.outputs.zip_name }}
+          path: ${{ steps.zip.outputs.zip_name }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.is_tag == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Markdown++ ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          files: ${{ steps.zip.outputs.zip_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
