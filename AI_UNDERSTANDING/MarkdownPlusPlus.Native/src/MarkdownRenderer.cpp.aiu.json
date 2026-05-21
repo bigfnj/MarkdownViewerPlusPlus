@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/MarkdownRenderer.cpp",
-  "sha1": "1b1d1689226a714ae5a805a16f6dfc0efa2e7721",
+  "sha1": "ec16a6a9f371a471ef87915e0537406c75f495ff",
   "purpose": "Implements the MarkdownRenderer facade. Drives cmark-gfm with SOURCEPOS + GITHUB_PRE_LANG + FOOTNOTES + STRIKETHROUGH_DOUBLE_TILDE + VALIDATE_UTF8 plus the table/strikethrough/autolink/tagfilter/tasklist extensions, then wraps the resulting HTML in two flavours: BuildPreview emits a CSP-locked document that loads CSS/JS/Mermaid via the markdownplusplus.local virtual host (used inside the WebView preview), BuildStandaloneDocument inlines the CSS and resolves assets via file:// URIs (used for HTML export).",
   "exports": [
     "MarkdownRenderer::BuildPreview(const PreviewDocumentRequest&) -> PreviewRenderResult",

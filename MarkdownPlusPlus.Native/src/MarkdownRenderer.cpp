@@ -96,7 +96,7 @@ PreviewRenderResult MarkdownRenderer::BuildPreview(const PreviewDocumentRequest&
     std::wstring document;
     document.reserve(renderedHtml.size() + 2048);
     document += L"<!doctype html><html><head><meta charset=\"utf-8\">";
-    document += L"<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data: file: https: https://markdownplusplus.document; style-src https://markdownplusplus.local 'unsafe-inline'; script-src https://markdownplusplus.local;\">";
+    document += L"<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data: file: https: https://markdownplusplus.document; style-src https://markdownplusplus.local 'unsafe-inline'; script-src https://markdownplusplus.local 'unsafe-inline';\">";
     document += L"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">";
     if (!baseUri.empty()) {
         document += L"<base href=\"";
