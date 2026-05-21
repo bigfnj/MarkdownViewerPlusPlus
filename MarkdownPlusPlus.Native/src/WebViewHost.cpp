@@ -1,6 +1,7 @@
 #include "WebViewHost.h"
 
 #include "HtmlUtil.h"
+#include "WinUtil.h"
 #include <shellapi.h>
 #include <shlobj.h>
 
