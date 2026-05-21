@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "CMakeLists.txt",
-  "sha1": "6fbe5ff44294bfc9c3db291575f17bb07a839326",
+  "sha1": "1dafd2a16c2998347c998b2948b4c4ddbd8e2464",
   "purpose": "Top-level CMake project definition. Declares project MarkdownPlusPlus 1.0.0 (C + CXX), exposes the MARKDOWNPP_BUILD_NATIVE option (ON by default), and conditionally pulls in the MarkdownPlusPlus.Native subdirectory which builds the DLL. Requires CMake >= 3.24.",
   "exports": [
     "project(MarkdownPlusPlus VERSION 1.0.0 LANGUAGES C CXX)",

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/MarkdownPlusPlus.rc",
-  "sha1": "bdf847ad92e06ef435b383c8b72eb462085e4544",
+  "sha1": "25b615b9386ca10048591cc1dc22ac6eda0ce570",
   "purpose": "Win32 resource script. Stamps the compiled MarkdownPlusPlus.dll with a VS_VERSION_INFO block (FILEVERSION/PRODUCTVERSION 1.0.0.0, CompanyName 'Markdown++', FileDescription 'Markdown++ native Notepad++ plugin', InternalName 'MarkdownPlusPlus', OriginalFilename 'MarkdownPlusPlus.dll') used by Windows for the Properties dialog and by Notepad++'s About dialog.",
   "exports": [
     "VS_VERSION_INFO resource (FileVersion 1.0.0.0, ProductVersion 1.0.0.0, lang 0x409 codepage 1200)"
