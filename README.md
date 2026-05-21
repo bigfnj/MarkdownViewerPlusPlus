@@ -23,6 +23,45 @@ GitHub-flavored Markdown, and bundles Mermaid support for offline diagrams.
 - Export standalone PDF.
 - Open the WebView2 system print dialog.
 
+## Mermaid Diagrams
+
+Markdown++ strictly parses Mermaid diagrams to ensure proper rendering and styling. 
+
+1. **Fenced Code Blocks:** Always wrap your graph inside an explicit Markdown code block tagged with `mermaid`:
+   ```markdown
+   ```mermaid
+   graph TD
+       A[Submit] --> B[Review]
+   ```
+   ```
+
+2. **Subgraph Identifiers:** A strict parsing engine requires all subgraphs to use explicit, alphanumeric alias identifiers. Do not attempt to style anonymous subgraphs or use full textual descriptions as the direct subgraph ID.
+
+   **❌ Incorrect (Will fail to style):**
+   ```mermaid
+   subgraph "Security Review Stage"
+       direction LR
+   end
+   style "Security Review Stage" fill:#fff
+   ```
+
+   **✅ Correct (Use aliases):**
+   ```mermaid
+   subgraph STAGE2 ["Security Review Stage"]
+       direction LR
+   end
+   style STAGE2 fill:#fff
+   ```
+   
+   **✅ Correct (Blank Titles):**
+   *(If you want a subgraph without a visual title, alias it and pass a single space)*
+   ```mermaid
+   subgraph GATE1 [" "]
+       direction LR
+       G1[Gate]
+   end
+   ```
+
 ## Requirements
 
 - Windows.
