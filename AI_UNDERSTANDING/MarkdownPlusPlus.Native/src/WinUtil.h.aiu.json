@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/WinUtil.h",
-  "sha1": "e21ed147b29bdc9a777f3fcb9f6191a4e7838f67",
+  "sha1": "56e7df08f61b12d94c425a3e7e3441b99496cc86",
   "purpose": "Declares low-level Win32/string helpers used across the plugin: UTF-8 <-> UTF-16 transcoding, the calling module's directory, simple UTF-8 file read/write, path joining via PathAppend, and path-to-file:// URI conversion via UrlCreateFromPath.",
   "exports": [
     "markdownplusplus::Utf8ToWide(const std::string&) -> std::wstring",

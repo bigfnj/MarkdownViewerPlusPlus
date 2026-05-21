@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/PreviewWindow.h",
-  "sha1": "f65e707e9230a74550ff340212df938edf0d8541",
+  "sha1": "d7915bd408d14baa244d7d32a32f74802314f577",
   "purpose": "Declares PreviewWindow, the Win32 child window that Notepad++ docks as the Markdown++ preview pane and that hosts the WebViewHost. Forwards lifecycle, scroll, link, print and PDF-export calls into the embedded WebViewHost.",
   "exports": [
     "class markdownplusplus::PreviewWindow",

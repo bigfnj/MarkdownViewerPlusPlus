@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/PreviewWindow.cpp",
-  "sha1": "3b968358f6a5021a7762cc62295a7b244b8cb92f",
+  "sha1": "ecdc8ea0a5543cc91ec5ae8b24e4705ed6b9976c",
   "purpose": "Implements the Notepad++ dockable preview pane. Registers the 'MarkdownPlusPlusNativePreview' window class, creates the WS_CHILD HWND parented to Notepad++, hosts a WebViewHost in its client area, registers itself as a dockable dialog via NPPM_DMMREGASDCKDLG (DWS_DF_CONT_RIGHT default), and forwards Show/Hide via NPPM_DMMSHOW/NPPM_DMMHIDE. Watches WM_SIZE for resize, WM_ACTIVATE to force a WebView Reload when the pane regains focus (this is the 'blank content on window context switch' fix), WM_NOTIFY/DMN_CLOSE to fire the close callback, and WM_DESTROY for cleanup.",
   "exports": [
     "PreviewWindow::~PreviewWindow",

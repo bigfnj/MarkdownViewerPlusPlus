@@ -25,6 +25,7 @@ public:
     void Show();
     void Hide();
     void Resize();
+    void ResetEnvironment();
     void SetDocument(
         const std::wstring& document,
         const std::wstring& articleHtml,
@@ -36,6 +37,7 @@ public:
         bool mermaidEnabled);
     void SetScrollCallback(ScrollCallback callback);
     void SetLinkCallback(LinkCallback callback);
+    void SetCrashCallback(WebViewHost::CrashCallback callback);
     void SetScrollRatio(double ratio);
     void SetScrollSourceLine(int sourceLine, double fallbackRatio, double anchorRatio);
     bool ShowPrintUi();

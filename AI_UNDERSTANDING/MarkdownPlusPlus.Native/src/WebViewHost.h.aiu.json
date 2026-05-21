@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/WebViewHost.h",
-  "sha1": "95ace33bd45c2598b8a1805737453e0498fdb027",
+  "sha1": "3c3b9b72917e30525dea6b4b544734fca9a8d188",
   "purpose": "Declares WebViewHost, the wrapper that creates the Microsoft Edge WebView2 environment/controller, navigates it to the rendered HTML document, manages virtual host mappings (markdownplusplus.local for plugin assets, markdownplusplus.document for the markdown file's directory), routes webMessage scroll/link events back to the C++ layer via callbacks, and drives ShowPrintUI / PrintToPdf.",
   "exports": [
     "class markdownplusplus::WebViewHost",

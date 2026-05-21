@@ -13,6 +13,7 @@ class WebViewHost {
 public:
     using ScrollCallback = std::function<void(int, double, bool)>;
     using LinkCallback = std::function<void(const std::wstring&)>;
+    using CrashCallback = std::function<void()>;
 
     WebViewHost() = default;
     ~WebViewHost();
@@ -34,6 +35,7 @@ public:
         bool mermaidEnabled);
     void SetScrollCallback(ScrollCallback callback);
     void SetLinkCallback(LinkCallback callback);
+    void SetCrashCallback(CrashCallback callback);
     void SetScrollRatio(double ratio);
     void SetScrollSourceLine(int sourceLine, double fallbackRatio, double anchorRatio);
     void Reload();
@@ -61,6 +63,7 @@ private:
     EventRegistrationToken newWindowRequestedToken_{};
     EventRegistrationToken navigationCompletedToken_{};
     EventRegistrationToken webMessageReceivedToken_{};
+    EventRegistrationToken processFailedToken_{};
     std::wstring pendingDocument_;
     std::wstring pendingArticleHtml_;
     std::wstring pendingTitle_;
@@ -75,6 +78,7 @@ private:
     unsigned long long pendingDocumentRevision_ = 0;
     ScrollCallback scrollCallback_;
     LinkCallback linkCallback_;
+    CrashCallback crashCallback_;
     Microsoft::WRL::ComPtr<ICoreWebView2Environment> environment_;
     Microsoft::WRL::ComPtr<ICoreWebView2Controller> controller_;
     Microsoft::WRL::ComPtr<ICoreWebView2> webView_;

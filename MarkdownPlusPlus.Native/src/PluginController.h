@@ -32,6 +32,7 @@ public:
     void ToggleAutoOpenMarkdown();
     void ToggleMermaid();
     void ToggleScrollSync();
+    void RestartEnvironment();
 
 private:
     enum CommandIndex {
@@ -48,6 +49,8 @@ private:
         ToggleScrollSyncCommand,
         ToggleMermaidCommand,
         SeparatorFour,
+        RestartWebViewCommand,
+        SeparatorFive,
         AboutCommand,
         CommandCount
     };

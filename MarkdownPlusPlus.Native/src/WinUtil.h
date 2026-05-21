@@ -14,4 +14,7 @@ bool WriteUtf8File(const std::wstring& path, const std::string& bytes);
 std::wstring CombinePath(const std::wstring& left, const std::wstring& right);
 std::wstring PathToFileUri(const std::wstring& path);
 
+void DebugLog(const std::wstring& message);
+void DebugLog(const std::string& message);
+
 }  // namespace markdownplusplus

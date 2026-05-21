@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/WebViewHost.cpp",
-  "sha1": "da1aa050739390f0f010cc190cccfb7e8746cf0a",
+  "sha1": "d9999e768eb46db63e0c8dff165d310e119a8f80",
   "purpose": "Boots Microsoft Edge WebView2 and runs the actual rendering surface. Calls CoInitializeEx (APARTMENTTHREADED), probes for the WebView2 Evergreen runtime, builds a user-data folder under %LOCALAPPDATA%\\MarkdownPlusPlus\\WebView2 (with %TEMP% fallback), creates the environment + controller asynchronously, sets virtual host name 'markdownplusplus.local' -> plugin assets folder and 'markdownplusplus.document' -> markdown file's directory, hooks NavigationStarting / NewWindowRequested (cancels user navigation and forwards links to LinkCallback), NavigationCompleted (sets documentLoaded_ and applies pending scroll), WebMessageReceived (parses ad-hoc JSON for previewScroll {line,ratio,force} and linkClick {href}). NavigateToString stores the pending document and either reuses the existing page via window.MarkdownPlusPlusPreview.replaceContent or does a full NavigateToString. Implements ShowPrintUi via ICoreWebView2_16 and PrintToPdf via ICoreWebView2_7, plus runtime-missing diagnostic message overlay (clickable to open the WebView2 download page).",
   "exports": [
     "WebViewHost::~WebViewHost",

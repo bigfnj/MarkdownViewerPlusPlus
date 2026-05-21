@@ -128,4 +128,15 @@ std::wstring PathToFileUri(const std::wstring& path) {
     return uri;
 }
 
+void DebugLog(const std::wstring& message) {
+    if (message.empty()) return;
+    std::wstring formatted = L"[Markdown++] " + message + L"\n";
+    OutputDebugStringW(formatted.c_str());
+}
+
+void DebugLog(const std::string& message) {
+    if (message.empty()) return;
+    DebugLog(Utf8ToWide(message));
+}
+
 }  // namespace markdownplusplus

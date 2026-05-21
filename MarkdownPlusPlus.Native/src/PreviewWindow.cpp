@@ -68,6 +68,11 @@ void PreviewWindow::Destroy() {
     }
 }
 
+void PreviewWindow::ResetEnvironment() {
+    webView_.Destroy();
+    webView_.Create(hwnd_, CombinePath(GetModuleDirectory(module_), L"assets"));
+}
+
 void PreviewWindow::Show() {
     if (notepadHandle_ && hwnd_) {
         SendMessageW(notepadHandle_, npp::NPPM_DMMSHOW, 0, reinterpret_cast<LPARAM>(hwnd_));
@@ -102,6 +107,10 @@ void PreviewWindow::SetScrollCallback(ScrollCallback callback) {
 
 void PreviewWindow::SetLinkCallback(LinkCallback callback) {
     webView_.SetLinkCallback(std::move(callback));
+}
+
+void PreviewWindow::SetCrashCallback(WebViewHost::CrashCallback callback) {
+    webView_.SetCrashCallback(std::move(callback));
 }
 
 void PreviewWindow::SetScrollRatio(double ratio) {

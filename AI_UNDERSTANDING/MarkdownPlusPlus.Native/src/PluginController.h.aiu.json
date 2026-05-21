@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/PluginController.h",
-  "sha1": "cfea7b8ec0a982caefb64eddac066524dc9f30b3",
+  "sha1": "496df768c66650d668ac7e4ace46e8dbc5f02dbe",
   "purpose": "Declares the PluginController singleton that owns plugin state and orchestrates everything: the FuncItem command array, options load/save, the preview window lifecycle, Scintilla viewport subclassing, two-way scroll sync between editor and preview, the debounced re-render timer, and the debounce-delay submenu. Notepad++ talks to the controller via PluginExports.cpp.",
   "exports": [
     "class markdownplusplus::PluginController",

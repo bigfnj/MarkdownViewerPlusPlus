@@ -562,6 +562,20 @@ HRESULT WebViewHost::Create(HWND parent, const std::wstring& assetRoot) {
                                         })
                                         .Get(),
                                     &webMessageReceivedToken_);
+
+                                webView_->add_ProcessFailed(
+                                    Callback<ICoreWebView2ProcessFailedEventHandler>(
+                                        [this](ICoreWebView2*, ICoreWebView2ProcessFailedEventArgs* args) -> HRESULT {
+                                            COREWEBVIEW2_PROCESS_FAILED_KIND kind;
+                                            args->get_ProcessFailedKind(&kind);
+                                            DebugLog(L"WebView2 Process Failed. Kind: " + std::to_wstring(static_cast<int>(kind)));
+                                            if (crashCallback_) {
+                                                crashCallback_();
+                                            }
+                                            return S_OK;
+                                        })
+                                        .Get(),
+                                    &processFailedToken_);
                             }
 
                             ready_ = true;
@@ -656,6 +670,10 @@ void WebViewHost::SetScrollCallback(ScrollCallback callback) {
 
 void WebViewHost::SetLinkCallback(LinkCallback callback) {
     linkCallback_ = std::move(callback);
+}
+
+void WebViewHost::SetCrashCallback(CrashCallback callback) {
+    crashCallback_ = std::move(callback);
 }
 
 void WebViewHost::SetScrollRatio(double ratio) {

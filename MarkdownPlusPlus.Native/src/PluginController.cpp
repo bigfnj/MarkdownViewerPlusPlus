@@ -60,6 +60,10 @@ void RunAboutCommand() {
     PluginController::Instance().ShowAbout();
 }
 
+void RunRestartWebViewCommand() {
+    PluginController::Instance().RestartEnvironment();
+}
+
 void RunToggleAutoOpenCommand() {
     PluginController::Instance().ToggleAutoOpenMarkdown();
 }
@@ -299,6 +303,15 @@ void PluginController::TogglePreview() {
     SetPreviewVisible(!previewVisible_);
 }
 
+void PluginController::RestartEnvironment() {
+    if (previewWindow_.Created()) {
+        previewWindow_.ResetEnvironment();
+        if (previewVisible_) {
+            RenderCurrentBuffer();
+        }
+    }
+}
+
 void PluginController::RefreshPreview() {
     if (!previewVisible_) {
         SetPreviewVisible(true);
@@ -443,6 +456,8 @@ void PluginController::RegisterCommands() {
     SetCommand(ToggleScrollSyncCommand, L"Synchronize scrolling", RunToggleScrollSyncCommand, nullptr, options_.scrollSyncEnabled);
     SetCommand(ToggleMermaidCommand, L"Render Mermaid diagrams", RunToggleMermaidCommand, nullptr, options_.mermaidEnabled);
     SetCommand(SeparatorFour, L"---", nullptr);
+    SetCommand(RestartWebViewCommand, L"Restart Web Environment", RunRestartWebViewCommand);
+    SetCommand(SeparatorFive, L"---", nullptr);
     SetCommand(AboutCommand, L"About", RunAboutCommand);
     commandsRegistered_ = true;
 }
@@ -688,6 +703,11 @@ void PluginController::SetPreviewVisible(bool visible) {
 
             previewWindow_.SetLinkCallback([this](const std::wstring& href) {
                 OpenPreviewLink(href);
+            });
+
+            previewWindow_.SetCrashCallback([this]() {
+                // If the process fails, attempt to restart immediately
+                RestartEnvironment();
             });
         }
 
