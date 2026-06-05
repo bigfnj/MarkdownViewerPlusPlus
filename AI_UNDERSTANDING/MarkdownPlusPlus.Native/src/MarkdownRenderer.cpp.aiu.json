@@ -1,36 +1,35 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/MarkdownRenderer.cpp",
-  "sha1": "ec16a6a9f371a471ef87915e0537406c75f495ff",
-  "purpose": "Implements the MarkdownRenderer facade. Drives cmark-gfm with SOURCEPOS + GITHUB_PRE_LANG + FOOTNOTES + STRIKETHROUGH_DOUBLE_TILDE + VALIDATE_UTF8 plus the table/strikethrough/autolink/tagfilter/tasklist extensions, then wraps the resulting HTML in two flavours: BuildPreview emits a CSP-locked document that loads CSS/JS/Mermaid via the markdownplusplus.local virtual host (used inside the WebView preview), BuildStandaloneDocument inlines the CSS and resolves assets via file:// URIs (used for HTML export).",
+  "sha1": "1b1d1689226a714ae5a805a16f6dfc0efa2e7721",
+  "purpose": "Converts Markdown text to complete HTML documents for live preview and standalone export using cmark-gfm.",
   "exports": [
-    "MarkdownRenderer::BuildPreview(const PreviewDocumentRequest&) -> PreviewRenderResult",
-    "MarkdownRenderer::BuildDocument(const PreviewDocumentRequest&) -> std::wstring",
-    "MarkdownRenderer::BuildStandaloneDocument(const PreviewDocumentRequest&) -> std::wstring"
+    "MarkdownRenderer::BuildPreview",
+    "MarkdownRenderer::BuildDocument",
+    "MarkdownRenderer::BuildStandaloneDocument"
   ],
   "imports": [
     "MarkdownRenderer.h",
     "HtmlUtil.h",
     "WinUtil.h",
-    "cmark-gfm.h",
-    "cmark-gfm-extension_api.h",
-    "cmark-gfm-core-extensions.h",
-    "<array>",
-    "<utility>"
+    "cmark-gfm.h"
   ],
-  "called_by": [],
+  "called_by": [
+    "PluginController.cpp \u2014 RenderCurrentBufferNow, ExportHtml, ExportPdf"
+  ],
   "calls_out_to": [
-    "cmark-gfm (cmark_parser_new / cmark_parser_attach_syntax_extension / cmark_parser_feed / cmark_parser_finish / cmark_render_html / cmark_node_free / cmark_parser_free / cmark_get_default_mem_allocator / cmark_find_syntax_extension / cmark_parser_get_syntax_extensions / cmark_gfm_core_extensions_ensure_registered)"
+    "cmark_gfm_core_extensions_ensure_registered \u2014 registers GFM extension set",
+    "cmark_parser_new / cmark_parser_feed / cmark_parser_finish / cmark_render_html \u2014 cmark-gfm parse+render pipeline",
+    "EscapeHtml \u2014 title and base URI escaping",
+    "ReadUtf8FileAsWide \u2014 loads preview.css for standalone export"
   ],
   "invariants": [
-    "Buffers allocated by cmark (the rendered HTML char*) must be freed through cmark's mem allocator's free, not free()/delete.",
-    "cmark_parser_finish must be called before reading the document; failure paths still free the parser.",
-    "BuildPreview uses the kDocumentBaseUri 'https://markdownplusplus.document/' as the <base href> for the article ONLY when request.baseDirectory is non-empty - this hooks into the virtual-host mapping set up in WebViewHost.",
-    "The CSP header in BuildPreview must allow the same hosts that WebViewHost actually maps (markdownplusplus.local for assets, markdownplusplus.document for the current file's directory)."
+    "BuildPreview embeds assets via https://markdownplusplus.local virtual origin (served by WebView2 custom scheme)",
+    "BuildStandaloneDocument inlines CSS and uses file:// URIs for assets to be self-contained",
+    "GFM extensions loaded: table, strikethrough, autolink, tagfilter, tasklist"
   ],
   "gotchas": [
-    "Markdown input is UTF-8 std::string; cmark validates UTF-8 (VALIDATE_UTF8) but invalid sequences are replaced rather than rejected.",
-    "BuildStandaloneDocument inlines CSS by reading preview.css from <assetRoot>/assets/preview.css at call time - if the asset folder is missing the export simply has no styling.",
-    "CMARK_OPT_SOURCEPOS adds data-sourcepos attributes that preview.js relies on for scroll-sync; removing it silently breaks scroll-sync."
+    "kDocumentBaseUri (https://markdownplusplus.document/) is the virtual origin used as base href when a document directory exists; WebViewHost maps this to the real filesystem path via SetVirtualHostNameToFolderMapping",
+    "CMARK_OPT_GITHUB_PRE_LANG adds the language class to pre blocks, required for syntax highlighting in preview.js"
   ]
 }

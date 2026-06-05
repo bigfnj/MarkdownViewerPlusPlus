@@ -2,32 +2,28 @@
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/PluginExports.cpp",
   "sha1": "c98a1bb8dcad59d1136b225a2d0fed1cd436c273",
-  "purpose": "The Notepad++ plugin ABI shim. DllMain captures HINSTANCE and hands it to the PluginController singleton (and disables thread-attach callbacks). The five __declspec(dllexport) extern \"C\" functions Notepad++ looks up by name (isUnicode, setInfo, getName, getFuncsArray, beNotified, messageProc) all delegate straight to PluginController::Instance(). This is the public surface Notepad++ binds to.",
+  "purpose": "DLL entry point and Notepad++ plugin ABI exports: DllMain, isUnicode, setInfo, getName, getFuncsArray, beNotified, messageProc.",
   "exports": [
-    "BOOL APIENTRY DllMain(HMODULE, DWORD, LPVOID)",
-    "extern \"C\" __declspec(dllexport) BOOL isUnicode()",
-    "extern \"C\" __declspec(dllexport) void setInfo(NppData)",
-    "extern \"C\" __declspec(dllexport) const wchar_t* getName()",
-    "extern \"C\" __declspec(dllexport) FuncItem* getFuncsArray(int* count)",
-    "extern \"C\" __declspec(dllexport) void beNotified(SCNotification*)",
-    "extern \"C\" __declspec(dllexport) LRESULT messageProc(UINT, WPARAM, LPARAM)"
+    "DllMain",
+    "isUnicode",
+    "setInfo",
+    "getName",
+    "getFuncsArray",
+    "beNotified",
+    "messageProc"
   ],
   "imports": [
     "PluginController.h"
   ],
   "called_by": [],
   "calls_out_to": [
-    "Notepad++ host process (these exports are resolved by GetProcAddress and called by Notepad++ during plugin load, menu population, notification dispatch, and shutdown)",
-    "Kernel32: DisableThreadLibraryCalls"
+    "PluginController::Instance() \u2014 all exports delegate to the singleton"
   ],
   "invariants": [
-    "isUnicode must return TRUE - this declares the plugin is Unicode and Notepad++ will hand it wide-char data.",
-    "Export names and signatures are fixed by the Notepad++ plugin ABI; renaming any of them breaks discovery.",
-    "DllMain only handles DLL_PROCESS_ATTACH; the controller is reachable through Instance() at any later time without further DllMain involvement.",
-    "setInfo may be called before getFuncsArray - the controller must be ready for either order."
+    "DllMain calls DisableThreadLibraryCalls to avoid DLL_THREAD_ATTACH/DETACH overhead",
+    "All exports are declared extern \"C\" __declspec(dllexport) to match the Notepad++ plugin ABI"
   ],
   "gotchas": [
-    "DisableThreadLibraryCalls means DLL_THREAD_ATTACH / DLL_THREAD_DETACH callbacks won't fire; any thread-local-storage that relies on them would be broken (currently none).",
-    "g_module is captured once at process-attach; setInfo also re-asserts it on the controller as a belt-and-braces measure."
+    "g_module is stored in DllMain and re-passed to Initialize via setInfo because DllMain's HMODULE and setInfo may be called on different threads in some Npp versions"
   ]
 }

@@ -1,25 +1,14 @@
 {
   "schema": 1,
   "path": "CMakeLists.txt",
-  "sha1": "1dafd2a16c2998347c998b2948b4c4ddbd8e2464",
-  "purpose": "Top-level CMake project definition. Declares project MarkdownPlusPlus 1.0.0 (C + CXX), exposes the MARKDOWNPP_BUILD_NATIVE option (ON by default), and conditionally pulls in the MarkdownPlusPlus.Native subdirectory which builds the DLL. Requires CMake >= 3.24.",
-  "exports": [
-    "project(MarkdownPlusPlus VERSION 1.0.0 LANGUAGES C CXX)",
-    "option MARKDOWNPP_BUILD_NATIVE (default ON)"
-  ],
-  "imports": [
-    "add_subdirectory(MarkdownPlusPlus.Native)"
-  ],
-  "called_by": [
-    "CMakePresets.json (configurePreset.binaryDir relative to ${sourceDir})"
-  ],
-  "calls_out_to": [
-    "CMake build system"
-  ],
+  "sha1": "9fcfdc3bf59f61c726f3fe564ce32f63c756b8f4",
+  "purpose": "Root CMake file that adds the MarkdownPlusPlus.Native subdirectory as the sole build target.",
+  "exports": [],
+  "imports": [],
+  "called_by": [],
+  "calls_out_to": [],
   "invariants": [
-    "CMake minimum version 3.24 - the inner CMakeLists and CMakePresets.json (cmakeMinimumRequired 4.2) further raise it for VS2026 generation."
+    "Delegates all build logic to MarkdownPlusPlus.Native/CMakeLists.txt"
   ],
-  "gotchas": [
-    "Top-level project version (0.1.0) should be kept aligned with the FileVersion stamped by MarkdownPlusPlus.rc and the version string in PluginController::ShowAbout."
-  ]
+  "gotchas": []
 }

@@ -2,29 +2,28 @@
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/PluginOptions.cpp",
   "sha1": "57fd33c22b35da113292dd29a433d5ea7e6e5298",
-  "purpose": "Implements PluginOptionsStore by reading/writing four keys ('MermaidEnabled', 'ScrollSyncEnabled', 'AutoOpenMarkdown', 'RenderDebounceMs') under section 'MarkdownPlusPlus' of the configured INI file via GetPrivateProfileIntW / WritePrivateProfileStringW. Also defines ClampRenderDebounceMs which constrains the debounce to [0, 1000] ms.",
+  "purpose": "Loads and saves plugin options (mermaid, scroll sync, auto-open, debounce delay) from/to a Notepad++ INI file via GetPrivateProfileInt/WritePrivateProfileString.",
   "exports": [
-    "PluginOptionsStore::PluginOptionsStore(std::wstring path)",
-    "PluginOptionsStore::Load() const -> PluginOptions",
-    "PluginOptionsStore::Save(const PluginOptions&) const",
-    "ClampRenderDebounceMs(int) -> int"
+    "PluginOptionsStore::Load",
+    "PluginOptionsStore::Save",
+    "ClampRenderDebounceMs"
   ],
   "imports": [
     "PluginOptions.h",
-    "<windows.h>",
-    "<algorithm>",
-    "<utility>"
+    "windows.h"
   ],
-  "called_by": [],
+  "called_by": [
+    "PluginController.cpp \u2014 LoadOptions / SaveOptions"
+  ],
   "calls_out_to": [
-    "Kernel32: GetPrivateProfileIntW / WritePrivateProfileStringW (Windows private-profile INI APIs)"
+    "GetPrivateProfileIntW / WritePrivateProfileStringW \u2014 Windows INI API"
   ],
   "invariants": [
-    "Both Load and Save clamp renderDebounceMs through ClampRenderDebounceMs so on-disk values can never exceed [0, 1000].",
-    "Empty path_ -> Load returns defaults, Save no-ops; callers rely on this for first-run before NPPM_GETPLUGINSCONFIGDIR is available."
+    "Load and Save are no-ops if path_ is empty",
+    "renderDebounceMs is clamped to [0, 1000] on both load and save"
   ],
   "gotchas": [
-    "WritePrivateProfileStringW caches changes in Windows' INI cache - changes may not be flushed to disk until the cache is forced or Notepad++ exits.",
-    "Booleans are stored as the strings \"0\" / \"1\" and read via GetPrivateProfileIntW with !=0; any non-zero integer counts as true."
+    "Uses the Windows INI API (GetPrivateProfileInt) rather than a custom parser \u2014 the file is a standard .ini with section [MarkdownPlusPlus]",
+    "Booleans are stored as 0/1 integers, not true/false strings"
   ]
 }

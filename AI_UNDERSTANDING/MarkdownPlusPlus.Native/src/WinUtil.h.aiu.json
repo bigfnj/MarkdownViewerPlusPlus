@@ -1,31 +1,29 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/WinUtil.h",
-  "sha1": "56e7df08f61b12d94c425a3e7e3441b99496cc86",
-  "purpose": "Declares low-level Win32/string helpers used across the plugin: UTF-8 <-> UTF-16 transcoding, the calling module's directory, simple UTF-8 file read/write, path joining via PathAppend, and path-to-file:// URI conversion via UrlCreateFromPath.",
+  "sha1": "e21ed147b29bdc9a777f3fcb9f6191a4e7838f67",
+  "purpose": "Declarations for Windows utility helpers: string conversion, file I/O, path operations, and URI conversion.",
   "exports": [
-    "markdownplusplus::Utf8ToWide(const std::string&) -> std::wstring",
-    "markdownplusplus::WideToUtf8(const std::wstring&) -> std::string",
-    "markdownplusplus::GetModuleDirectory(HINSTANCE) -> std::wstring",
-    "markdownplusplus::ReadUtf8FileAsWide(const std::wstring&) -> std::wstring",
-    "markdownplusplus::WriteUtf8File(const std::wstring&, const std::string&) -> bool",
-    "markdownplusplus::CombinePath(const std::wstring&, const std::wstring&) -> std::wstring",
-    "markdownplusplus::PathToFileUri(const std::wstring&) -> std::wstring"
+    "markdownplusplus::Utf8ToWide",
+    "markdownplusplus::WideToUtf8",
+    "markdownplusplus::GetModuleDirectory",
+    "markdownplusplus::ReadUtf8FileAsWide",
+    "markdownplusplus::WriteUtf8File",
+    "markdownplusplus::CombinePath",
+    "markdownplusplus::PathToFileUri"
   ],
   "imports": [
-    "<windows.h>",
-    "<string>"
+    "windows.h",
+    "string"
   ],
   "called_by": [
-    "MarkdownPlusPlus.Native/src/WinUtil.cpp",
-    "MarkdownPlusPlus.Native/src/ClipboardUtil.cpp",
-    "MarkdownPlusPlus.Native/src/MarkdownRenderer.cpp",
-    "MarkdownPlusPlus.Native/src/PluginController.cpp",
-    "MarkdownPlusPlus.Native/src/PreviewWindow.cpp"
+    "MarkdownRenderer.cpp",
+    "WebViewHost.cpp",
+    "ClipboardUtil.cpp",
+    "PreviewWindow.cpp",
+    "PluginController.cpp"
   ],
   "calls_out_to": [],
-  "invariants": [
-    "CombinePath is MAX_PATH-bounded (uses Shlwapi PathAppend) - long paths beyond MAX_PATH will be truncated."
-  ],
+  "invariants": [],
   "gotchas": []
 }

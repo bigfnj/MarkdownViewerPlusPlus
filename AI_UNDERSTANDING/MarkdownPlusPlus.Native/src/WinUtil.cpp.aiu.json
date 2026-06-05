@@ -1,38 +1,40 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/WinUtil.cpp",
-  "sha1": "6744a7ef46bcb75a6587d07ef37b04599d719952",
-  "purpose": "Implements the WinUtil helpers. Utf8ToWide does a strict MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS) and falls back to CP_ACP for input that is not valid UTF-8; WideToUtf8 round-trips back. GetModuleDirectory resolves the calling DLL's directory by growing the buffer until GetModuleFileNameW fits. ReadUtf8FileAsWide slurps a file via std::ifstream and converts; WriteUtf8File uses _wfopen_s+fwrite. CombinePath wraps Shlwapi PathAppendW. PathToFileUri wraps Shlwapi UrlCreateFromPathW with the two-pass length probe.",
+  "sha1": "d6262540f7cdfd949ef44bd054dec64490531fb6",
+  "purpose": "Windows utility functions: UTF-8/wide string conversion, module directory resolution, file I/O, path combination, and file:// URI construction.",
   "exports": [
-    "Utf8ToWide(const std::string&) -> std::wstring",
-    "WideToUtf8(const std::wstring&) -> std::string",
-    "GetModuleDirectory(HINSTANCE) -> std::wstring",
-    "ReadUtf8FileAsWide(const std::wstring&) -> std::wstring",
-    "WriteUtf8File(const std::wstring&, const std::string&) -> bool",
-    "CombinePath(const std::wstring&, const std::wstring&) -> std::wstring",
-    "PathToFileUri(const std::wstring&) -> std::wstring"
+    "markdownplusplus::Utf8ToWide",
+    "markdownplusplus::WideToUtf8",
+    "markdownplusplus::GetModuleDirectory",
+    "markdownplusplus::ReadUtf8FileAsWide",
+    "markdownplusplus::WriteUtf8File",
+    "markdownplusplus::CombinePath",
+    "markdownplusplus::PathToFileUri"
   ],
   "imports": [
     "WinUtil.h",
-    "<shlwapi.h>",
-    "<cstdio>",
-    "<fstream>",
-    "<iterator>",
-    "<vector>"
+    "shlwapi.h"
   ],
-  "called_by": [],
+  "called_by": [
+    "MarkdownRenderer.cpp",
+    "WebViewHost.cpp",
+    "ClipboardUtil.cpp",
+    "PreviewWindow.cpp",
+    "PluginController.cpp"
+  ],
   "calls_out_to": [
-    "Kernel32: MultiByteToWideChar / WideCharToMultiByte / GetModuleFileNameW",
-    "Shlwapi: PathRemoveFileSpecW / PathAppendW / UrlCreateFromPathW",
-    "CRT: std::ifstream, _wfopen_s, fwrite, fclose, ferror"
+    "MultiByteToWideChar / WideCharToMultiByte \u2014 UTF-8 \u2194 wide char conversion",
+    "GetModuleFileNameW + PathRemoveFileSpecW \u2014 DLL directory resolution",
+    "UrlCreateFromPathW \u2014 converts Windows path to file:// URI"
   ],
   "invariants": [
-    "Utf8ToWide preserves the size by passing static_cast<int>(text.size()) (no null terminator), then sizes the wstring to the conversion result exactly.",
-    "WriteUtf8File returns true only if the entire byte buffer was written and ferror is clear.",
-    "PathToFileUri uses the two-pass UrlCreateFromPath idiom (probe with E_POINTER for required length, then call again with the buffer) - the probe must return E_POINTER for the call to succeed."
+    "Utf8ToWide falls back to CP_ACP if the input fails strict UTF-8 validation",
+    "GetModuleDirectory retries with doubling buffer until path fits",
+    "CombinePath uses PathAppendW which handles trailing backslashes correctly"
   ],
   "gotchas": [
-    "CombinePath uses a stack buffer of MAX_PATH (260) wide chars - longer combined paths get truncated silently. For full long-path support this would need the \\\\?\\ prefix and a larger buffer.",
-    "Utf8ToWide silently falls back to CP_ACP for invalid UTF-8 input; this means file contents declared UTF-8 but actually CP1252 will be read as CP1252 rather than failing - intentional tolerance for older Notepad++ buffers."
+    "CombinePath uses a fixed MAX_PATH buffer \u2014 paths longer than MAX_PATH will be silently truncated",
+    "PathToFileUri requires a probe call (urlLength=0, returns E_POINTER) to determine the output buffer size before the actual call"
   ]
 }

@@ -1,49 +1,21 @@
 {
   "schema": 1,
-  "project": "markdownplusplus",
-  "last_audit_commit": "2bc7809",
-  "last_audit_at": "2026-05-21T19:51:39.680209Z",
-  "generator": "ai-context-runner/4.3.0",
-  "overview": "Notepad++ markdown viewer plugin. Native C++ DLL using Microsoft WebView2 to render a markdown preview pane inside Notepad++. Built with CMake (CMakeLists.txt + CMakePresets.json). MarkdownPlusPlus.Native/src/ holds the plugin source (PluginController, PreviewWindow, WebViewHost, MarkdownRenderer, ClipboardUtil, HtmlUtil, NppApi, PluginOptions, WinUtil, etc.). MarkdownPlusPlus.Native/assets/ ships preview.css, preview.js, and the mermaid bundle that the WebView loads. tools/ has PowerShell/Python helpers (build-native.ps1, install-native-deps.py, install-native-plugin.ps1).",
-  "frameworks": [
-    {
-      "name": "Notepad++ Plugin API"
-    },
-    {
-      "name": "Microsoft Edge WebView2"
-    },
-    {
-      "name": "CMake"
-    },
-    {
-      "name": "C++"
-    }
-  ],
+  "project": "MarkdownViewerPlusPlus",
+  "last_audit_commit": "",
+  "last_audit_at": "2026-05-13T05:19:50.187Z",
+  "generator": "",
+  "overview": "",
+  "frameworks": [],
   "tracked_globs": {
     "include": [
-      "MarkdownPlusPlus.Native/src/**",
-      "MarkdownPlusPlus.Native/assets/**",
-      "tools/**",
-      "CMakeLists.txt",
-      "CMakePresets.json"
+      "MarkdownPlusPlus.Native/src/**/*.cpp",
+      "MarkdownPlusPlus.Native/src/**/*.h",
+      "**/CMakeLists.txt"
     ],
     "exclude": [
-      "node_modules/**",
-      "dist/**",
-      "build/**",
-      "out/**",
-      ".git/**",
-      "**/*.png",
-      "**/*.jpg",
-      "**/*.jpeg",
-      "**/*.gif",
-      "**/*.svg",
-      "**/*.ico",
-      "**/*.woff",
-      "**/*.woff2",
-      "**/*.ttf",
-      "**/*.eot"
+      "**/build/**",
+      "**/third_party/**"
     ]
   },
-  "graph": "PluginExports.cpp -> PluginController (DLL entry points; Notepad++ calls these)\nPluginController -> PreviewWindow (docks/undocks the preview)\nPluginController -> PluginOptions (load/save plugin config)\nPreviewWindow -> WebViewHost (manages the WebView2 lifecycle)\nWebViewHost -> MarkdownRenderer (markdown -> HTML)\nWebViewHost -> assets/preview.css + preview.js + mermaid/ (loaded into the WebView)\nMarkdownRenderer -> HtmlUtil (HTML sanitize/escape helpers)\nPluginController -> ClipboardUtil, WinUtil (Windows API helpers)\nNppApi.h -> Notepad++ plugin interface declarations\nCMakeLists.txt -> MarkdownPlusPlus.Native/src/** (build target)"
+  "graph": ""
 }

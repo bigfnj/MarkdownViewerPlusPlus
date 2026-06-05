@@ -1,36 +1,27 @@
 {
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/PluginController.h",
-  "sha1": "496df768c66650d668ac7e4ace46e8dbc5f02dbe",
-  "purpose": "Declares the PluginController singleton that owns plugin state and orchestrates everything: the FuncItem command array, options load/save, the preview window lifecycle, Scintilla viewport subclassing, two-way scroll sync between editor and preview, the debounced re-render timer, and the debounce-delay submenu. Notepad++ talks to the controller via PluginExports.cpp.",
+  "sha1": "cfea7b8ec0a982caefb64eddac066524dc9f30b3",
+  "purpose": "PluginController class declaration: singleton owning all plugin state, command handlers, and scroll sync coordination.",
   "exports": [
-    "class markdownplusplus::PluginController",
-    "static PluginController::Instance() -> PluginController&",
-    "PluginController::SetModule / Initialize / GetFunctions / Name / MessageProc / OnNotification / Shutdown",
-    "PluginController::TogglePreview / RefreshPreview / CopyRenderedHtml / ExportHtml / ExportPdf / PrintPreview / ShowAbout / ToggleAutoOpenMarkdown / ToggleMermaid / ToggleScrollSync",
-    "enum CommandIndex (ToggleCommand, RefreshCommand, CopyHtmlCommand, ExportHtmlCommand, ExportPdfCommand, PrintCommand, ToggleAutoOpenMarkdownCommand, ToggleScrollSyncCommand, ToggleMermaidCommand, AboutCommand, plus SeparatorOne-Four and CommandCount)"
+    "PluginController"
   ],
   "imports": [
     "NppApi.h",
     "MarkdownRenderer.h",
     "PluginOptions.h",
-    "PreviewWindow.h",
-    "<array>",
-    "<string>"
+    "PreviewWindow.h"
   ],
   "called_by": [
-    "MarkdownPlusPlus.Native/src/PluginController.cpp",
-    "MarkdownPlusPlus.Native/src/PluginExports.cpp"
+    "PluginExports.cpp",
+    "PluginController.cpp"
   ],
   "calls_out_to": [],
   "invariants": [
-    "Strict singleton via Instance(); module_, nppData_, and options must be set (SetModule then Initialize) before any TogglePreview/Render call uses them.",
-    "The commands_ array is sized to CommandCount and its layout is what gets handed to Notepad++ via getFuncsArray - changing the enum order changes the menu order.",
-    "Scintilla subclass refData is reinterpret_cast'd from `this`; the controller must outlive the subclass (Shutdown removes it).",
-    "renderDebounceTimer_ is a SetTimer(nullptr,...) id that must be KillTimer'd on Shutdown and before re-arming."
+    "Singleton via Instance() static method; default constructor is private",
+    "CommandCount defines the exact size of the commands_ array \u2014 adding menu items requires incrementing the enum"
   ],
   "gotchas": [
-    "MessageProc currently always returns TRUE (consumes every WM_COMMAND) so it must not be reused for messages that need DefWindowProc-style handling.",
-    "Many bookkeeping fields exist purely to suppress sync feedback loops between editor and preview (suppressEditorToPreviewUntil_, suppressPreviewToEditorUntil_, lastEditor*, lastPreview*); maintain symmetry when touching scroll-sync code."
+    "The CommandIndex enum order matches the Notepad++ plugin menu order \u2014 separators (SeparatorOne etc.) occupy real slots and must be kept in sequence"
   ]
 }

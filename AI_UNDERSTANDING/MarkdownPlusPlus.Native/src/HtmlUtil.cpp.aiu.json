@@ -2,21 +2,23 @@
   "schema": 1,
   "path": "MarkdownPlusPlus.Native/src/HtmlUtil.cpp",
   "sha1": "7809a9db4065457965992a7b211fc5a5be68c430",
-  "purpose": "Implements EscapeHtml and EscapeScriptString. EscapeHtml does the standard 5-character HTML entity substitution. EscapeScriptString hardens UTF-16 text for safe inclusion inside a single-quoted JavaScript string literal embedded in a <script> tag (escapes \\, ', \\r, \\n, line/paragraph separators, and unicode-escapes < > & so it cannot break out of the script).",
+  "purpose": "HTML and JavaScript string escaping utilities used when embedding dynamic content in generated HTML documents.",
   "exports": [
-    "markdownplusplus::EscapeHtml(const std::wstring&) -> std::wstring",
-    "markdownplusplus::EscapeScriptString(const std::wstring&) -> std::wstring"
+    "markdownplusplus::EscapeHtml",
+    "markdownplusplus::EscapeScriptString"
   ],
   "imports": [
     "HtmlUtil.h"
   ],
-  "called_by": [],
+  "called_by": [
+    "MarkdownRenderer.cpp \u2014 title escaping, base href escaping"
+  ],
   "calls_out_to": [],
   "invariants": [
-    "Output is pure transformation of input; no external state."
+    "EscapeHtml escapes &, <, >, \", ' to HTML entities",
+    "EscapeScriptString escapes \\, ', \\r, \\n, <, >, &, U+2028, U+2029 for safe embedding in JS string literals"
   ],
   "gotchas": [
-    "EscapeScriptString assumes the surrounding JS literal uses single quotes; double-quoted literals would not be properly escaped by it.",
-    "U+2028 / U+2029 are treated as line terminators by the JS spec - escaping them is mandatory, not cosmetic."
+    "EscapeScriptString uses \\u003c and \\u003e for < and > (Unicode escapes, not HTML entities) to prevent </script> injection in inline scripts"
   ]
 }
