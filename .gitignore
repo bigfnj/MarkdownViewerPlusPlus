@@ -299,3 +299,7 @@ AI_UNDERSTANDING.md
 SESSION_LOG_*.md
 
 SESSION_HANDOFF*.md
+.codex/
+.cursorrules
+.windsurfrules
+SESSION_*
