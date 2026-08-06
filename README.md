@@ -61,10 +61,24 @@ becomes a rendered flowchart in the preview, with no network access required.
 
 ## Installation
 
-Install a released build:
+Every release on the [Releases page](https://github.com/bigfnj/MarkdownViewerPlusPlus/releases)
+ships two options: an MSI installer and a standalone zip.
 
-1. Download the latest `MarkdownPlusPlus-<version>-win-x64.zip` from the
-   [Releases page](https://github.com/bigfnj/MarkdownViewerPlusPlus/releases).
+### Option A: MSI installer (recommended)
+
+1. Download `MarkdownPlusPlus-<version>-win-x64.msi`.
+2. Run it. The installer auto-detects your 64-bit Notepad++ install and places the
+   plugin in its `plugins\MarkdownPlusPlus` folder. Close Notepad++ first, or the
+   installer will prompt you to.
+3. Start Notepad++ and open a Markdown file, or use
+   **Plugins > Markdown++ > Markdown++**.
+
+The installer requires 64-bit Notepad++ and shows a clear message if it cannot find
+one. To upgrade later, run the newer MSI. To remove it, use **Add or Remove Programs**.
+
+### Option B: standalone zip (manual)
+
+1. Download `MarkdownPlusPlus-<version>-win-x64.zip`.
 2. Extract it. You should get a `MarkdownPlusPlus` folder that contains
    `MarkdownPlusPlus.dll` and an `assets` folder.
 3. Copy that whole `MarkdownPlusPlus` folder into your Notepad++ `plugins`
@@ -74,12 +88,11 @@ Install a released build:
    C:\Program Files\Notepad++\plugins\MarkdownPlusPlus\MarkdownPlusPlus.dll
    ```
 
-4. Restart Notepad++. Open any Markdown file, or use
-   **Plugins > Markdown++ > Markdown++** to open the preview.
+4. Restart Notepad++.
 
-Because the default Notepad++ location is under `C:\Program Files`, copying the
-folder needs Administrator rights. Use an elevated file manager or an elevated
-PowerShell window for the copy.
+Because the default Notepad++ location is under `C:\Program Files`, the manual copy
+needs Administrator rights. Use an elevated file manager or an elevated PowerShell
+window for the copy.
 
 ## Usage
 
@@ -187,6 +200,7 @@ MarkdownPlusPlus/
 
 ```text
 MarkdownPlusPlus.Native/   Native plugin source, assets, and native docs
+installer/                 WiX MSI installer project and build script
 smoke-tests/               Manual smoke-test Markdown fixtures
 tools/                     Dependency, build, and install helpers
 docs/screenshots/          README screenshots

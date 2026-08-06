@@ -136,6 +136,39 @@ smoke-tests/markdownplusplus-smoke.md
 smoke-tests/smoke-test.md
 ```
 
+## Installer (MSI)
+
+The `installer/` folder holds a WiX v5 project that builds an x64 MSI. The MSI
+auto-detects the Notepad++ install directory from the registry and installs the
+plugin into `<Notepad++>\plugins\MarkdownPlusPlus`.
+
+Prerequisites (one-time):
+
+```powershell
+dotnet tool install --global wix --version 5.0.2
+```
+
+Build the MSI from a packaged plugin folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\build-installer.ps1
+```
+
+By default the script finds the newest
+`build\cmake\*\package\Release\MarkdownPlusPlus`, reads the version from
+`CMakeLists.txt`, adds the matching WiX Util/UI extensions, and writes
+`build\installer\MarkdownPlusPlus-<version>-win-x64.msi`. Override any of these:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer\build-installer.ps1 `
+    -PayloadDir "build\cmake\vs2026-x64\package\Release\MarkdownPlusPlus" `
+    -Version 1.1.0 `
+    -OutDir ".\build\installer"
+```
+
+The release workflow builds the same MSI on the Windows runner and attaches it to
+the GitHub release alongside the standalone zip.
+
 ## Notes
 
 - The CMake target links the generated WebView2 SDK from `packages/Microsoft.Web.WebView2.1.0.3912.50`.

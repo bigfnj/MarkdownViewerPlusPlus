@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Markdown++ for Notepad++ - MSI installer (x64 only).
+
+  Behavior:
+    * Auto-detects the Notepad++ install directory from the registry.
+    * Installs the plugin into <Notepad++>\plugins\MarkdownPlusPlus.
+    * Refuses to install (with a clear message) if 64-bit Notepad++ is absent,
+      distinguishing "only 32-bit Notepad++ found" from "not found at all".
+    * Prompts the user to close Notepad++ if it is running (it locks the DLL).
+    * Cleanly upgrades and uninstalls via Windows Installer.
+
+  Build inputs (passed with -d on the wix build command line):
+    Version     -> product version, e.g. 1.1.0
+    PayloadDir  -> path to the packaged "MarkdownPlusPlus" folder that contains
+                   MarkdownPlusPlus.dll and the assets\ tree.
+
+  Requires extensions: WixToolset.Util.wixext, WixToolset.UI.wixext
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <Package Name="Markdown++ for Notepad++"
+           Manufacturer="bigfnj"
+           Version="$(var.Version)"
+           UpgradeCode="3ED4AF5E-C055-4047-A714-0AC881C407BE"
+           Scope="perMachine"
+           InstallerVersion="500"
+           Compressed="yes">
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Markdown++ is already installed. Setup will now exit." />
+
+    <!--
+      Notepad++'s installer records its install directory in the default value of
+      HKLM\SOFTWARE\Notepad++. The 64-bit build writes to the 64-bit registry view;
+      the 32-bit build writes to the 32-bit (WOW6432Node) view.
+    -->
+    <Property Id="NPPDIR" Secure="yes">
+      <RegistrySearch Id="NppDirX64" Root="HKLM" Key="SOFTWARE\Notepad++" Type="raw" Bitness="always64" />
+    </Property>
+    <Property Id="NPPDIR32" Secure="yes">
+      <RegistrySearch Id="NppDirX86" Root="HKLM" Key="SOFTWARE\Notepad++" Type="raw" Bitness="always32" />
+    </Property>
+
+    <!-- This build is x64-only. Block install with a targeted message. -->
+    <Launch Condition="Installed OR NPPDIR OR NOT NPPDIR32"
+            Message="Markdown++ requires the 64-bit (x64) build of Notepad++. A 32-bit Notepad++ was detected. Please install 64-bit Notepad++ and run this installer again." />
+    <Launch Condition="Installed OR NPPDIR OR NPPDIR32"
+            Message="Notepad++ was not found on this computer. Please install 64-bit Notepad++ before installing Markdown++." />
+
+    <!-- Notepad++ locks MarkdownPlusPlus.dll while running; ask the user to close it (no forced kill). -->
+    <util:CloseApplication Id="CloseNotepadPlusPlus"
+                           Target="notepad++.exe"
+                           PromptToContinue="yes"
+                           Description="Notepad++ is running. Please close it, then click Retry to continue installing Markdown++." />
+
+    <!-- Redirect the install directory to the detected <Notepad++>\plugins\MarkdownPlusPlus. -->
+    <SetProperty Id="INSTALLFOLDER"
+                 Value="[NPPDIR]\plugins\MarkdownPlusPlus"
+                 After="CostFinalize"
+                 Condition="NPPDIR" />
+
+    <Feature Id="MarkdownPlusPlus" Title="Markdown++ plugin" Level="1">
+      <ComponentGroupRef Id="PluginFiles" />
+    </Feature>
+
+    <!-- Add/Remove Programs metadata. -->
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/bigfnj/MarkdownViewerPlusPlus" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/bigfnj/MarkdownViewerPlusPlus/issues" />
+    <Property Id="ARPNOREPAIR" Value="1" />
+
+    <!-- Welcome + license + progress. No directory browse: the target is auto-detected. -->
+    <ui:WixUI Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(sys.SOURCEFILEDIR)license.rtf" />
+  </Package>
+
+  <Fragment>
+    <!--
+      Placeholder root under Program Files (x64). INSTALLFOLDER is redirected at
+      runtime by the SetProperty above to the detected Notepad++ plugins folder.
+    -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="MarkdownPlusPlus" />
+    </StandardDirectory>
+  </Fragment>
+
+  <Fragment>
+    <!-- Auto-harvest MarkdownPlusPlus.dll and the assets\ tree from the packaged folder. -->
+    <ComponentGroup Id="PluginFiles" Directory="INSTALLFOLDER" Source="$(var.PayloadDir)">
+      <Files Include="**" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

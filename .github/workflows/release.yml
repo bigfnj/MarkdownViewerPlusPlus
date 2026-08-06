@@ -1,11 +1,13 @@
 name: Release
 
 # Fires when a version tag is pushed (e.g. `git tag v0.1.0 && git push --tags`).
-# Builds the native plugin on a Windows runner, packages the output, and
-# attaches the zip to a GitHub release named after the tag.
+# Builds the native plugin on a Windows runner, packages the output, builds an
+# MSI installer, and attaches BOTH the standalone zip and the MSI to a GitHub
+# release named after the tag.
 #
 # Workflow Dispatch is also enabled so you can do a dry-run build (no release)
-# from the Actions UI without cutting a tag.
+# from the Actions UI without cutting a tag. Both the zip and MSI are uploaded
+# as build artifacts on every run, including dry-runs.
 
 on:
   push:
@@ -37,6 +39,10 @@ jobs:
 
       - name: Set up CMake (4.x — required by CMakePresets.json)
         uses: lukka/get-cmake@latest
+
+      - name: Set up WiX (v5 — for the MSI installer)
+        shell: pwsh
+        run: dotnet tool install --global wix --version 5.0.2
 
       - name: Resolve version
         id: version
@@ -97,6 +103,18 @@ jobs:
           Write-Host "Package contents:"
           Get-ChildItem -Recurse $pkgDir | Select-Object FullName, Length
 
+      - name: Build MSI installer (x64)
+        id: msi
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $pkgDir  = "build/cmake/vs2022-x64/package/Release/MarkdownPlusPlus"
+          ./installer/build-installer.ps1 -PayloadDir $pkgDir -Version $version -OutDir "."
+          $msiName = "MarkdownPlusPlus-$version-win-x64.msi"
+          if (-not (Test-Path $msiName)) { throw "Expected $msiName was not produced" }
+          "msi_name=$msiName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Built $msiName"
+
       - name: Create zip
         id: zip
         shell: pwsh
@@ -111,11 +129,19 @@ jobs:
           "zip_name=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "Created $zipName"
 
-      - name: Upload artifact (always — even for dry-runs)
+      - name: Upload zip artifact (always — even for dry-runs)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.zip.outputs.zip_name }}
           path: ${{ steps.zip.outputs.zip_name }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload MSI artifact (always — even for dry-runs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.msi.outputs.msi_name }}
+          path: ${{ steps.msi.outputs.msi_name }}
           if-no-files-found: error
           retention-days: 30
 
@@ -125,7 +151,9 @@ jobs:
         with:
           name: Markdown++ ${{ steps.version.outputs.version }}
           tag_name: ${{ github.ref_name }}
-          files: ${{ steps.zip.outputs.zip_name }}
+          files: |
+            ${{ steps.zip.outputs.zip_name }}
+            ${{ steps.msi.outputs.msi_name }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           draft: false
