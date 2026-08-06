@@ -63,7 +63,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-native.ps1 -Configuration
 
 The preview resolves images relative to the file, including SVG:
 
-![Markdown++ local SVG](../../smoke-tests/markdownplusplus-smoke-image.svg)
+![Markdown++ local SVG](sample-image.svg)
 
 ## Blockquote with inline everything
 

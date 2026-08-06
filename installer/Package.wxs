@@ -57,10 +57,15 @@
                            PromptToContinue="yes"
                            Description="Notepad++ is running. Please close it, then click Retry to continue installing Markdown++." />
 
-    <!-- Redirect the install directory to the detected <Notepad++>\plugins\MarkdownPlusPlus. -->
+    <!--
+      Redirect the install directory to the detected <Notepad++>\plugins\MarkdownPlusPlus.
+      A type-51 directory override MUST run after CostInitialize and BEFORE CostFinalize,
+      so CostFinalize resolves the component target paths against the new value. Scheduling
+      this after CostFinalize (a common mistake) leaves files at the placeholder location.
+    -->
     <SetProperty Id="INSTALLFOLDER"
                  Value="[NPPDIR]\plugins\MarkdownPlusPlus"
-                 After="CostFinalize"
+                 After="CostInitialize"
                  Condition="NPPDIR" />
 
     <Feature Id="MarkdownPlusPlus" Title="Markdown++ plugin" Level="1">

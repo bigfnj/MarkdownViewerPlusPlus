@@ -43,10 +43,12 @@ Write-Host "Version: $Version"
 
 # --- Resolve payload directory ---------------------------------------------------
 if (-not $PayloadDir) {
-    $candidates = Get-ChildItem -Path (Join-Path $repoRoot 'build\cmake') -Directory -ErrorAction SilentlyContinue |
-        ForEach-Object { Join-Path $_.FullName 'package\Release\MarkdownPlusPlus' } |
-        Where-Object { Test-Path $_ } |
-        Sort-Object { (Get-Item $_).LastWriteTime } -Descending
+    $candidates = @(
+        Get-ChildItem -Path (Join-Path $repoRoot 'build\cmake') -Directory -ErrorAction SilentlyContinue |
+            ForEach-Object { Join-Path $_.FullName 'package\Release\MarkdownPlusPlus' } |
+            Where-Object { Test-Path $_ } |
+            Sort-Object { (Get-Item $_).LastWriteTime } -Descending
+    )
     if (-not $candidates) {
         throw "No packaged plugin found under build\cmake\*\package\Release\MarkdownPlusPlus. Build/package the plugin first, or pass -PayloadDir."
     }

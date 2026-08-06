@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="160" viewBox="0 0 480 160" role="img" aria-labelledby="title desc">
+  <title id="title">Markdown++ Smoke Test Image</title>
+  <desc id="desc">A local SVG image used to verify Markdown++ preview image loading.</desc>
+  <rect width="480" height="160" rx="12" fill="#0d1117"/>
+  <rect x="18" y="18" width="444" height="124" rx="8" fill="#161b22" stroke="#30363d"/>
+  <path d="M70 100V60h16l18 23 18-23h16v40h-16V79l-18 22-18-22v21H70z" fill="#58a6ff"/>
+  <path d="M166 100V60h18l28 24V60h16v40h-18l-28-24v24h-16z" fill="#e6edf3"/>
+  <text x="252" y="87" fill="#e6edf3" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">Markdown++</text>
+  <text x="254" y="112" fill="#8b949e" font-family="Segoe UI, Arial, sans-serif" font-size="15">local image loaded</text>
+</svg>
