@@ -24,7 +24,7 @@
     {
       "name": "vs2022-x64",
       "displayName": "Visual Studio 2022 x64",
-      "description": "Portable preset for stable Visual Studio 2022 — used by the GitHub Actions release workflow (windows-latest runner) since VS2026 preview is not on hosted runners.",
+      "description": "Portable preset for stable Visual Studio 2022 - retained for local VS2022 builds or a windows-2022 runner; the release workflow now uses the vs2026 preset (hosted runners ship VS2026 since June 2026).",
       "generator": "Visual Studio 17 2022",
       "architecture": {
         "value": "x64",
