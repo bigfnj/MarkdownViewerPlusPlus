@@ -171,7 +171,7 @@ the GitHub release alongside the standalone zip.
 
 ## Notes
 
-- The CMake target links the generated WebView2 SDK from `packages/Microsoft.Web.WebView2.1.0.3912.50`.
+- The CMake target links the generated WebView2 SDK from `packages/Microsoft.Web.WebView2.1.0.4129.50`.
 - The CMake target builds and links generated `third_party/cmark-gfm` static libraries.
 - The build copies `MarkdownPlusPlus.Native/assets` beside the DLL.
 - The runtime WebView2 Evergreen install is still a user-machine runtime requirement, not a repo-local dependency.

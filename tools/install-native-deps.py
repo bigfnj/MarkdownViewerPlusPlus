@@ -19,9 +19,9 @@ import zipfile
 from pathlib import Path
 
 
-WEBVIEW2_VERSION = "1.0.3912.50"
+WEBVIEW2_VERSION = "1.0.4129.50"
 CMARK_GFM_VERSION = "0.29.0.gfm.13"
-MERMAID_VERSION = "11.14.0"
+MERMAID_VERSION = "11.16.1"
 
 
 def download(url: str, destination: Path) -> None:
