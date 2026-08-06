@@ -10,6 +10,8 @@ The installer:
   distinguishing "only 32-bit Notepad++ found" from "not found at all".
 - Prompts to close Notepad++ if it is running (it locks the plugin DLL).
 - Upgrades and uninstalls cleanly through Windows Installer.
+- Allows reinstalling the same version to repair a broken install, replacing the
+  existing install rather than adding a duplicate Add/Remove Programs entry.
 
 ## Files
 

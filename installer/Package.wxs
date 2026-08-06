@@ -31,7 +31,14 @@
 
     <MediaTemplate EmbedCab="yes" />
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of Markdown++ is already installed. Setup will now exit." />
+    <!--
+      AllowSameVersionUpgrades lets the user reinstall the SAME version to repair a
+      broken/corrupted install, and guarantees a prior same-version install is removed
+      first so there is never a duplicate Add/Remove Programs entry. Re-running the
+      exact same MSI also offers the standard Repair option via the maintenance UI.
+    -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="A newer version of Markdown++ is already installed. Setup will now exit." />
 
     <!--
       Notepad++'s installer records its install directory in the default value of

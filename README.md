@@ -74,7 +74,9 @@ ships two options: an MSI installer and a standalone zip.
    **Plugins > Markdown++ > Markdown++**.
 
 The installer requires 64-bit Notepad++ and shows a clear message if it cannot find
-one. To upgrade later, run the newer MSI. To remove it, use **Add or Remove Programs**.
+one. To upgrade later, run the newer MSI. Re-running the **same** version reinstalls
+in place, which repairs a broken or corrupted install and never leaves a duplicate
+entry. To remove it, use **Add or Remove Programs**.
 
 ### Option B: standalone zip (manual)
 
