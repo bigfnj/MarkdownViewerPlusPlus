@@ -2,6 +2,7 @@
 
 #include "ClipboardUtil.h"
 #include "MarkdownRenderer.h"
+#include "Version.h"
 #include "WinUtil.h"
 
 #include <commdlg.h>
@@ -421,7 +422,8 @@ void PluginController::PrintPreview() {
 void PluginController::ShowAbout() {
     MessageBoxW(
         nppData_._nppHandle,
-        L"Markdown++ native preview\nVersion 1.1.0\n\nRenderer: WebView2\nMarkdown engine: cmark-gfm\nMermaid: bundled/offline\nExports: HTML, PDF, clipboard, print",
+        L"Markdown++ native preview\nVersion " MDPP_VERSION_WSTRING
+        L"\n\nRenderer: WebView2\nMarkdown engine: cmark-gfm\nMermaid: bundled/offline\nExports: HTML, PDF, clipboard, print",
         kPluginName,
         MB_OK | MB_ICONINFORMATION);
 }

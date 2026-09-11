@@ -73,8 +73,13 @@ Notepad++ and WebView2 and are untested; `tests/README.md` says so explicitly.
 - 🟡 **`DebugLog` coverage is still thin** — three call sites, all in `WebViewHost.cpp`. Unlogged:
   both `ApplyPending*` early returns, an empty `ReadCurrentBufferUtf8`, a failed `WriteUtf8File`.
   README's "every message marks a failure path" is true; the converse is not yet.
-- 🟡 **Version drift**: About says 1.1.0 and the `.rc` says `1,1,0,0` while `CMakeLists` says 1.2.0.
-  Generate both from `${PROJECT_VERSION}` so the existing tag-vs-CMake check covers them.
+- ~~🟡 **Version drift**: About says 1.1.0 and the `.rc` says `1,1,0,0` while `CMakeLists` says
+  1.2.0.~~ **FIXED 2026-09-11 for the 1.2.1 release.** Both now read a generated
+  `Version.h` (`src/Version.h.in` -> `configure_file`), so the only place a version is written is
+  `project(... VERSION x.y.z)`. Drift is now impossible rather than currently-absent, which
+  matters because the release workflow only ever compared the tag against CMakeLists and would
+  never have caught it. Verified on the built DLL: `FileVersion 1.2.1.0`,
+  `ProductVersion 1.2.1.0`, About reads "Version 1.2.1".
 - 🟡 **Per-render waste on the typing path.** The rendered body is copied ~7 times per render, and
   on the steady-state in-place path the entire `document` string is built and then never read —
   roughly 1.5 MB of pointless memcpy per keystroke on a 100 KB file. `GetNotepadString` also
@@ -205,8 +210,16 @@ fix was written.
 
 ### Release state
 
-`v1.2.0` was committed but **never tagged** — blocked by a GitHub Actions outage on 2026-08-06.
-Tags stop at `v1.1.0` while `CMakeLists` says 1.2.0. The release is still owed.
+`v1.2.0` was committed but **never tagged** — blocked by a GitHub Actions outage on 2026-08-06,
+leaving tags at `v1.1.0` while `CMakeLists` said 1.2.0. Rather than cut a stale 1.2.0, the
+2026-09-11 fixes were folded in and released as **`v1.2.1`**, which supersedes it. 1.2.0 is
+deliberately skipped as a tag; its content is included.
+
+Worth knowing for the next release: the `Verify tag matches CMakeLists.txt VERSION` step in
+`release.yml` is the only automated version gate, and it compares the tag against CMakeLists
+**only**. That is why the `.rc` and the About box could sit two minor versions behind without
+anything failing. They are generated now, so that gap is closed at the source rather than by
+adding another check.
 
 ## Bugs
 

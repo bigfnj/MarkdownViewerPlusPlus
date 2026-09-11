@@ -303,3 +303,12 @@ SESSION_HANDOFF*.md
 .cursorrules
 .windsurfrules
 SESSION_*
+# Agent working directories. These appear the moment anyone runs a coding agent in
+# this checkout, and this is a PUBLIC repo, so they are excluded up front rather
+# than after the first accidental commit.
+.claude/
+.cursor/
+.aider*
+# Populated by tools/install-native-deps.py and deleted again at the end of a run;
+# ignored so an interrupted run cannot leave it stageable.
+.download-cache/

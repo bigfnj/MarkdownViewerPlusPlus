@@ -65,7 +65,7 @@ check should fail.
 
 External HTTPS image:
 
-![NES console external image](https://soulpirates.net/wp-content/uploads/2024/07/NES-Console-1024x610.png)
+![External image over HTTPS](https://www.gstatic.com/webp/gallery/1.png)
 
 ## Blocks
 

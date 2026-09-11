@@ -83,6 +83,14 @@ if(MSVC)
     target_compile_options(markdownplusplus_core PRIVATE /W4 /permissive-)
 endif()
 
+# Version.h is generated so the resource file and the About dialog cannot drift from
+# project(VERSION ...) again. The resource compiler reads it too, which is why the generated
+# directory goes on the include path rather than the header being included by relative path.
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/Version.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/Version.h"
+    @ONLY)
+
 add_library(MarkdownPlusPlus MODULE
     src/ClipboardUtil.cpp
     src/ClipboardUtil.h
@@ -108,6 +116,7 @@ target_compile_definitions(MarkdownPlusPlus PRIVATE
     CMARK_GFM_EXTENSIONS_STATIC_DEFINE)
 
 target_include_directories(MarkdownPlusPlus PRIVATE
+    "${CMAKE_CURRENT_BINARY_DIR}/generated"
     "${MARKDOWNPP_WEBVIEW2_ROOT}/include"
     "${CMAKE_SOURCE_DIR}/third_party/cmark-gfm/src"
     "${CMAKE_BINARY_DIR}/third_party/cmark-gfm/src"
