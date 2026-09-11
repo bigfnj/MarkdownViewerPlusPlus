@@ -121,6 +121,10 @@ void PreviewWindow::SetScrollSourceLine(int sourceLine, double fallbackRatio, do
     webView_.SetScrollSourceLine(sourceLine, fallbackRatio, anchorRatio);
 }
 
+void PreviewWindow::InvalidateLoadedDocument() {
+    webView_.InvalidateLoadedDocument();
+}
+
 bool PreviewWindow::ShowPrintUi() {
     return webView_.ShowPrintUi();
 }
@@ -153,12 +157,14 @@ LRESULT PreviewWindow::HandleMessage(HWND hwnd, UINT message, WPARAM wParam, LPA
             Resize();
             return 0;
 
-        case WM_ACTIVATE:
-            if (LOWORD(wParam) != WA_INACTIVE) {
-                webView_.Reload();
-            }
-            return 0;
-
+        // NO WM_ACTIVATE HANDLER, DELIBERATELY. a2aefaa added one that called
+        // webView_.Reload() to "fix blank content on window context switch". It never ran:
+        // this is a WS_CHILD docked panel and WM_ACTIVATE goes to top-level windows, which a
+        // 2026-09-11 instrumented run confirmed (zero arrivals across repeated focus changes).
+        // Worse, had it run it would have CAUSED the symptom it was named after: the document
+        // is delivered with NavigateToString, whose page sits on about:blank (also confirmed
+        // by that run), so Reload() re-fetches about:blank and throws the rendered document
+        // away. Re-showing the panel already re-renders via SetPreviewVisible.
         case WM_NOTIFY: {
             const auto* header = reinterpret_cast<NMHDR*>(lParam);
             if (header && header->code == DMN_CLOSE && onClose_) {

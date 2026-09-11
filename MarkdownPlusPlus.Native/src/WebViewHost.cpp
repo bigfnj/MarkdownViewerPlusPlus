@@ -489,7 +489,16 @@ HRESULT WebViewHost::Create(HWND parent, const std::wstring& assetRoot) {
                             }
 
                             controller_ = controller;
-                            controller_->get_CoreWebView2(&webView_);
+                            const HRESULT coreResult = controller_->get_CoreWebView2(&webView_);
+                            if (FAILED(coreResult) || !webView_) {
+                                // Previously ready_ was set to true below regardless, leaving a
+                                // host that believed it was ready with no CoreWebView2, no event
+                                // handlers and no retry: a permanently blank panel with no error.
+                                DebugLog(L"CoreWebView2 unavailable, hr=" + HResultToHex(coreResult));
+                                ShowMessage(WebViewFailureMessage(
+                                    L"Markdown++ could not attach to the WebView2 preview.", coreResult));
+                                return S_OK;
+                            }
 
                             if (webView_) {
                                 Microsoft::WRL::ComPtr<ICoreWebView2_3> webView3;
@@ -547,8 +556,22 @@ HRESULT WebViewHost::Create(HWND parent, const std::wstring& assetRoot) {
 
                                 webView_->add_NavigationCompleted(
                                     Callback<ICoreWebView2NavigationCompletedEventHandler>(
-                                        [this](ICoreWebView2*, ICoreWebView2NavigationCompletedEventArgs*) -> HRESULT {
+                                        [this](ICoreWebView2*, ICoreWebView2NavigationCompletedEventArgs* args) -> HRESULT {
+                                            BOOL succeeded = TRUE;
+                                            if (args) {
+                                                args->get_IsSuccess(&succeeded);
+                                            }
+                                            if (!succeeded) {
+                                                // Latching documentLoaded_ here would make Ready()
+                                                // report true for a blank page, sending the next
+                                                // render down the in-place JS path and letting
+                                                // print/PDF run against nothing.
+                                                DebugLog(L"Navigation failed; not marking the document loaded.");
+                                                documentLoaded_ = false;
+                                                return S_OK;
+                                            }
                                             documentLoaded_ = true;
+                                            HideMessage();
                                             ApplyPendingScrollRatio();
                                             return S_OK;
                                         })
@@ -693,10 +716,8 @@ void WebViewHost::SetScrollSourceLine(int sourceLine, double fallbackRatio, doub
     ApplyPendingScrollRatio();
 }
 
-void WebViewHost::Reload() {
-    if (webView_) {
-        webView_->Reload();
-    }
+void WebViewHost::InvalidateLoadedDocument() {
+    documentLoaded_ = false;
 }
 
 bool WebViewHost::ShowPrintUi() {
@@ -931,6 +952,15 @@ void WebViewHost::UpdateDocumentHostMapping(const std::wstring& documentRoot) {
 
     if (SUCCEEDED(result)) {
         mappedDocumentRoot_ = documentRoot;
+    }
+}
+
+void WebViewHost::HideMessage() {
+    // The overlay is a WS_VISIBLE child created on top of the WebView2 window and was only
+    // ever destroyed in Destroy(). An informational notice ("print is available after the
+    // preview finishes loading") therefore covered the preview for the rest of the session.
+    if (messageWindow_) {
+        ShowWindow(messageWindow_, SW_HIDE);
     }
 }
 

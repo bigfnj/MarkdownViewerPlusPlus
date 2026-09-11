@@ -38,13 +38,18 @@ public:
     void SetCrashCallback(CrashCallback callback);
     void SetScrollRatio(double ratio);
     void SetScrollSourceLine(int sourceLine, double fallbackRatio, double anchorRatio);
-    void Reload();
     bool ShowPrintUi();
     bool PrintToPdf(const std::wstring& path);
     bool Ready() const { return ready_ && webView_ != nullptr && documentLoaded_; }
+    // Drop the "a document is loaded" belief so the next render takes the full
+    // NavigateToString path instead of the in-place JS update. The manual Refresh
+    // command uses this: when a user asks for a refresh, the in-place path is exactly
+    // what cannot be trusted.
+    void InvalidateLoadedDocument();
 
 private:
     void ShowMessage(const std::wstring& message);
+    void HideMessage();
     void ApplyPendingDocument();
     bool ApplyPendingContentUpdate();
     void ApplyPendingScrollRatio();

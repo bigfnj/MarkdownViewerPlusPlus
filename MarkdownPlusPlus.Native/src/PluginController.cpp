@@ -263,9 +263,16 @@ void PluginController::OnNotification(npp::SCNotification* notification) {
             return;
 
         case npp::NPPN_BUFFERACTIVATED:
-            AutoOpenOrCloseForCurrentDocument();
-            if (previewVisible_) {
-                RenderCurrentBuffer();
+            // AutoOpenOrCloseForCurrentDocument may itself show the panel, and showing it
+            // already renders. Rendering again here meant every tab switch paid for two full
+            // cmark passes and two WebView2 updates -- measured, not assumed. Render only when
+            // the panel was ALREADY visible and so nothing rendered on our behalf.
+            {
+                const bool wasVisible = previewVisible_;
+                AutoOpenOrCloseForCurrentDocument();
+                if (previewVisible_ && wasVisible) {
+                    RenderCurrentBuffer();
+                }
             }
             return;
 
@@ -313,8 +320,15 @@ void PluginController::RestartEnvironment() {
 }
 
 void PluginController::RefreshPreview() {
+    // A HARD refresh. The normal render path prefers an in-place JS content swap, which is
+    // precisely what cannot be trusted when a user is asking for a refresh -- if the page's
+    // script context is wedged or the document was replaced underneath us, that path can
+    // report success while changing nothing. Dropping documentLoaded_ first forces the next
+    // render through a full NavigateToString.
+    previewWindow_.InvalidateLoadedDocument();
+
     if (!previewVisible_) {
-        SetPreviewVisible(true);
+        SetPreviewVisible(true);   // this renders
         return;
     }
 
@@ -445,7 +459,7 @@ void PluginController::RegisterCommands() {
 
     SetCommand(ToggleCommand, L"Markdown++", TogglePreviewCommand, &toggleShortcut_);
     SetCommand(SeparatorOne, L"---", nullptr);
-    SetCommand(RefreshCommand, L"Refresh preview", RefreshPreviewCommand);
+    SetCommand(RefreshCommand, L"Refresh preview", RefreshPreviewCommand, &refreshShortcut_);
     SetCommand(SeparatorTwo, L"---", nullptr);
     SetCommand(CopyHtmlCommand, L"Copy HTML to clipboard", RunCopyHtmlCommand);
     SetCommand(ExportHtmlCommand, L"Export HTML...", RunExportHtmlCommand);

@@ -107,7 +107,15 @@ private:
 
     HINSTANCE module_ = nullptr;
     npp::NppData nppData_{};
-    npp::ShortcutKey toggleShortcut_{true, false, true, 'M'};
+    npp::ShortcutKey toggleShortcut_{true, false, true, 'M'};      // Ctrl+Shift+M
+    // Ctrl+ALT+R, not Ctrl+Shift+R: Notepad++ binds Ctrl+Shift+R to Macro > Start Recording
+    // by default, and a colliding plugin default is resolved silently and in nobody's favour.
+    // Must be a member, not a local -- Notepad++ stores the POINTER, not a copy.
+    // Verified on this box: shortcuts.xml has no <PluginCommands> section at all, so Notepad++
+    // records only user OVERRIDES and a plugin-declared default does take effect.
+    // Caveat worth knowing: on keyboard layouts where AltGr sends Ctrl+Alt this can be awkward;
+    // rebind in Settings > Shortcut Mapper > Plugin commands.
+    npp::ShortcutKey refreshShortcut_{true, true, false, 'R'};     // Ctrl+Alt+R
     std::array<npp::FuncItem, CommandCount> commands_{};
     PluginOptions options_{};
     PluginOptionsStore optionsStore_;

@@ -100,21 +100,58 @@ window for the copy.
 
 The plugin adds a **Markdown++** submenu under **Plugins** with direct commands:
 
-| Command | What it does |
-| --- | --- |
-| `Markdown++` | Toggle the preview panel. |
-| `Refresh preview` | Re-render the current document. |
-| `Copy HTML to clipboard` | Copy the rendered HTML. |
-| `Export HTML...` | Save a standalone HTML file. |
-| `Export PDF...` | Save a standalone PDF. |
-| `Print...` | Open the WebView2 print dialog. |
-| `Open automatically for Markdown files` | Toggle auto-open for Markdown extensions. |
-| `Synchronize scrolling` | Toggle editor/preview scroll sync. |
-| `Render Mermaid diagrams` | Toggle Mermaid rendering. |
-| `Preview update delay` | Set the debounce delay before re-rendering. |
-| `About` | Show version and plugin information. |
+| Command | Shortcut | What it does |
+| --- | --- | --- |
+| `Markdown++` | `Ctrl+Shift+M` | Toggle the preview panel. |
+| `Refresh preview` | `Ctrl+Alt+R` | Force a full re-render of the current document. |
+| `Copy HTML to clipboard` | | Copy the rendered HTML. |
+| `Export HTML...` | | Save a standalone HTML file. |
+| `Export PDF...` | | Save a standalone PDF. |
+| `Print...` | | Open the WebView2 print dialog. |
+| `Open automatically for Markdown files` | | Toggle auto-open for Markdown extensions. |
+| `Synchronize scrolling` | | Toggle editor/preview scroll sync. |
+| `Render Mermaid diagrams` | | Toggle Mermaid rendering. |
+| `Preview update delay` | | Set the debounce delay before re-rendering. |
+| `Restart Web Environment` | | Tear down and recreate the WebView2 host. The bigger hammer if `Refresh preview` is not enough. |
+| `About` | | Show version and plugin information. |
 
 The toggle and delay settings are persisted, so they carry over between sessions.
+
+Shortcuts are defaults. Rebind either of them in **Settings > Shortcut Mapper > Plugin
+commands** — useful if `Ctrl+Alt+R` is awkward on a layout where AltGr sends Ctrl+Alt.
+
+## Troubleshooting
+
+### The preview pane is blank
+
+Press **`Ctrl+Alt+R`** (`Plugins > Markdown++ > Refresh preview`). That forces a full
+re-render and is the fastest fix. You do **not** need to close the file or restart
+Notepad++.
+
+If it keeps happening, a log helps more than a description. The plugin writes diagnostics
+with `OutputDebugString`, so they cost nothing when nobody is listening and appear the
+moment you attach a viewer:
+
+1. Run [DebugView](https://learn.microsoft.com/sysinternals/downloads/debugview) (`dbgview64.exe`).
+2. Reproduce the blank pane.
+3. Filter on `[Markdown++]` and send the lines along.
+
+A healthy session logs **nothing** — every message marks a failure path, so anything at
+all in that filter is a finding.
+
+Worth knowing what a blank pane looks like, because the three causes paint differently:
+
+| What you see | Meaning |
+| --- | --- |
+| Empty, in your editor's theme colour | The document was replaced or never applied. `Ctrl+Alt+R` fixes it. |
+| Dark grey with a line of text | A WebView2 status message. Read it — it carries the real error. |
+| Flat system white | WebView2 did not start. Check the Edge WebView2 Runtime is installed. |
+
+### The preview never opens for a file
+
+Detection is by **file extension**: `.md`, `.markdown`, `.mdown`, `.mkd`, `.mkdn`. Setting
+Notepad++'s language to Markdown on a file with another extension does not currently open
+the preview; use `Ctrl+Shift+M` to toggle it manually.
 
 ## Mermaid Diagrams
 

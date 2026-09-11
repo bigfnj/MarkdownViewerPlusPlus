@@ -606,9 +606,18 @@
         return false;
       }
 
+      // Refuse an empty update instead of blanking the pane and reporting success.
+      // `article.innerHTML = html || ""` wiped the preview and still returned true, so the
+      // host believed the content had been applied and never fell back to a full
+      // re-navigation -- a silent, permanent blank that survived a restart because the same
+      // empty content was re-applied every time. Returning false makes the host re-navigate.
+      if (typeof html !== "string" || html.length === 0) {
+        return false;
+      }
+
       contentRevision = revision;
       suppressScrollNotifications(650);
-      article.innerHTML = html || "";
+      article.innerHTML = html;
       assignHeadingIds();
       if (typeof title === "string") {
         document.title = title;

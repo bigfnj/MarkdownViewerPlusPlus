@@ -40,6 +40,9 @@ public:
     void SetCrashCallback(WebViewHost::CrashCallback callback);
     void SetScrollRatio(double ratio);
     void SetScrollSourceLine(int sourceLine, double fallbackRatio, double anchorRatio);
+    // Forwarded so a manual Refresh can force a full re-navigation instead of the
+    // in-place JS content swap.
+    void InvalidateLoadedDocument();
     bool ShowPrintUi();
     bool PrintToPdf(const std::wstring& path);
     bool Ready() const { return webView_.Ready(); }
