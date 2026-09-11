@@ -503,10 +503,18 @@ HRESULT WebViewHost::Create(HWND parent, const std::wstring& assetRoot) {
                             if (webView_) {
                                 Microsoft::WRL::ComPtr<ICoreWebView2_3> webView3;
                                 if (SUCCEEDED(webView_.As(&webView3)) && !assetRoot_.empty()) {
-                                    webView3->SetVirtualHostNameToFolderMapping(
+                                    // If this fails, preview.css, preview.js and mermaid.min.js all 404
+                                    // under the page's default-src 'none' CSP and the preview renders as
+                                    // unstyled text with no scroll sync, no links and no diagrams -- with
+                                    // nothing anywhere saying why.
+                                    const HRESULT mapResult = webView3->SetVirtualHostNameToFolderMapping(
                                         L"markdownplusplus.local",
                                         assetRoot_.c_str(),
                                         COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_DENY_CORS);
+                                    if (FAILED(mapResult)) {
+                                        DebugLog(L"Asset host mapping failed, hr=" + HResultToHex(mapResult)
+                                                 + L" root=" + assetRoot_);
+                                    }
                                 }
 
                                 webView_->add_NavigationStarting(
@@ -590,8 +598,11 @@ HRESULT WebViewHost::Create(HWND parent, const std::wstring& assetRoot) {
                                 webView_->add_ProcessFailed(
                                     Callback<ICoreWebView2ProcessFailedEventHandler>(
                                         [this](ICoreWebView2*, ICoreWebView2ProcessFailedEventArgs* args) -> HRESULT {
-                                            COREWEBVIEW2_PROCESS_FAILED_KIND kind;
-                                            args->get_ProcessFailedKind(&kind);
+                                            COREWEBVIEW2_PROCESS_FAILED_KIND kind =
+                                                COREWEBVIEW2_PROCESS_FAILED_KIND_BROWSER_PROCESS_EXITED;
+                                            if (args) {
+                                                args->get_ProcessFailedKind(&kind);
+                                            }
                                             DebugLog(L"WebView2 Process Failed. Kind: " + std::to_wstring(static_cast<int>(kind)));
                                             if (crashCallback_) {
                                                 crashCallback_();
@@ -830,7 +841,26 @@ void WebViewHost::ApplyPendingDocument() {
     }
 
     documentLoaded_ = false;
-    webView_->NavigateToString(pendingDocument_.c_str());
+
+    // WebView2 documents a hard limit: htmlContent may not exceed 2 MB. Past it the call fails,
+    // documentLoaded_ is already false, and every later render re-takes this same failing path:
+    // a permanently blank pane with no message. CMARK_OPT_SOURCEPOS puts a data-sourcepos
+    // attribute on every block, so the HTML runs well above the markdown size and the ceiling
+    // arrives sooner than you would guess.
+    constexpr size_t kNavigateToStringLimitBytes = 2u * 1024u * 1024u;
+    const size_t documentBytes = pendingDocument_.size() * sizeof(wchar_t);
+    if (documentBytes >= kNavigateToStringLimitBytes) {
+        DebugLog(L"Document too large for NavigateToString: "
+                 + std::to_wstring(documentBytes) + L" bytes.");
+        ShowMessage(L"Markdown++ cannot preview this document: it exceeds the WebView2 2 MB limit.");
+        return;
+    }
+
+    const HRESULT navResult = webView_->NavigateToString(pendingDocument_.c_str());
+    if (FAILED(navResult)) {
+        DebugLog(L"NavigateToString failed, hr=" + HResultToHex(navResult));
+        ShowMessage(WebViewFailureMessage(L"Markdown++ could not display the preview.", navResult));
+    }
 }
 
 bool WebViewHost::ApplyPendingContentUpdate() {
@@ -862,7 +892,12 @@ bool WebViewHost::ApplyPendingContentUpdate() {
     script += std::to_wstring(revision);
     script += L"));})();";
 
-    webView_->ExecuteScript(
+    // The synchronous HRESULT matters as much as the completion result: if the script cannot
+    // even be queued, the completion lambda never runs, so the documentLoaded_=false recovery
+    // below never fires -- and returning true here would tell ApplyPendingDocument the update
+    // had applied. That is the same failure shape as the replaceContent bug fixed in 52dc53d,
+    // one layer up.
+    const HRESULT scriptResult = webView_->ExecuteScript(
         script.c_str(),
         Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
             [this, revision](HRESULT result, LPCWSTR value) -> HRESULT {
@@ -873,6 +908,11 @@ bool WebViewHost::ApplyPendingContentUpdate() {
                 return S_OK;
             })
             .Get());
+
+    if (FAILED(scriptResult)) {
+        DebugLog(L"ExecuteScript could not be queued, hr=" + HResultToHex(scriptResult));
+        return false;   // let the caller fall back to a full navigation
+    }
 
     return true;
 }
@@ -996,6 +1036,15 @@ void WebViewHost::ShowMessage(const std::wstring& message) {
         return;
     }
 
+    // SW_SHOW is REQUIRED, not belt-and-braces. The window is created WS_VISIBLE, so before
+    // HideMessage() existed it happened to be visible already and nothing showed it explicitly.
+    // Adding HideMessage() in 52dc53d turned that into a real defect: once the first successful
+    // navigation hid the overlay, every later ShowMessage() wrote text into a hidden window and
+    // the error vanished. HWND_TOP because the overlay is created after the WebView2 child and
+    // must sit above it.
+    ShowWindow(messageWindow_, SW_SHOW);
+    SetWindowPos(messageWindow_, HWND_TOP, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     SetWindowTextW(messageWindow_, message.c_str());
     InvalidateRect(messageWindow_, nullptr, TRUE);
     Resize();

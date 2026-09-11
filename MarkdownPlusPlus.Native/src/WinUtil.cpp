@@ -111,16 +111,27 @@ std::wstring PathToFileUri(const std::wstring& path) {
         return {};
     }
 
-    std::wstring normalized = path;
-    DWORD urlLength = 0;
-    HRESULT probe = UrlCreateFromPathW(normalized.c_str(), nullptr, &urlLength, 0);
-    if (probe != E_POINTER || urlLength == 0) {
-        return {};
+    // The old size-probe passed a NULL output buffer and demanded E_POINTER back.
+    // UrlCreateFromPathW answers E_INVALIDARG to a NULL buffer, so the guard fired every time
+    // and this function returned "" for EVERY input. BuildStandaloneDocument then silently
+    // dropped preview.js, mermaid.min.js and its <base href>, because each is behind an
+    // `if (!uri.empty())` -- exported HTML had no diagrams, no anchors and broken image paths,
+    // with no error shown. Give it a real buffer and grow only if it asks.
+    // 2084 rather than INTERNET_MAX_URL_LENGTH so this does not pull in wininet.h for one
+    // constant. UrlCreateFromPathW reports a larger requirement via E_POINTER, which the
+    // retry below honours, so the initial size is a fast path and not a limit.
+    constexpr DWORD kInitialUrlChars = 2084;
+    std::wstring uri(kInitialUrlChars, L'\0');
+    DWORD urlLength = static_cast<DWORD>(uri.size());
+    HRESULT result = UrlCreateFromPathW(path.c_str(), uri.data(), &urlLength, 0);
+
+    if (result == E_POINTER && urlLength > 0) {
+        uri.assign(urlLength, L'\0');
+        result = UrlCreateFromPathW(path.c_str(), uri.data(), &urlLength, 0);
     }
 
-    std::wstring uri(urlLength, L'\0');
-    HRESULT result = UrlCreateFromPathW(normalized.c_str(), uri.data(), &urlLength, 0);
     if (FAILED(result)) {
+        DebugLog(L"PathToFileUri failed for [" + path + L"]");
         return {};
     }
 

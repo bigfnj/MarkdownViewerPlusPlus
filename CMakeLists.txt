@@ -6,6 +6,9 @@ project(MarkdownPlusPlus
     LANGUAGES C CXX)
 
 option(MARKDOWNPP_BUILD_NATIVE "Build the native Markdown++ Notepad++ plugin" ON)
+option(MARKDOWNPP_BUILD_TESTS "Build the Markdown++ unit tests (ctest)" ON)
+
+enable_testing()
 
 if(MARKDOWNPP_BUILD_NATIVE)
     add_subdirectory(MarkdownPlusPlus.Native)

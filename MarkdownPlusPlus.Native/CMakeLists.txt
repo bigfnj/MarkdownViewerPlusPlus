@@ -38,17 +38,56 @@ add_subdirectory(
     "${CMAKE_BINARY_DIR}/third_party/cmark-gfm"
     EXCLUDE_FROM_ALL)
 
+# Everything in this OBJECT library is free of HWND, Notepad++ and WebView2, so
+# the same object files back both the plugin DLL and MarkdownPlusPlus_tests.
+# One source list, no drift. The shell sources below stay in the MODULE target:
+# nothing links them twice, and a test binary that dragged in WebView2 could not
+# run headless anyway.
+add_library(markdownplusplus_core OBJECT
+    src/HtmlUtil.cpp
+    src/HtmlUtil.h
+    src/MarkdownRenderer.cpp
+    src/MarkdownRenderer.h
+    src/PluginOptions.cpp
+    src/PluginOptions.h
+    src/WinUtil.cpp
+    src/WinUtil.h)
+
+target_compile_features(markdownplusplus_core PUBLIC cxx_std_20)
+
+target_compile_definitions(markdownplusplus_core PUBLIC
+    UNICODE
+    _UNICODE
+    WIN32_LEAN_AND_MEAN
+    NOMINMAX)
+
+target_compile_definitions(markdownplusplus_core PRIVATE
+    CMARK_GFM_STATIC_DEFINE
+    CMARK_GFM_EXTENSIONS_STATIC_DEFINE)
+
+target_include_directories(markdownplusplus_core
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    PRIVATE
+        "${CMAKE_SOURCE_DIR}/third_party/cmark-gfm/src"
+        "${CMAKE_BINARY_DIR}/third_party/cmark-gfm/src"
+        "${CMAKE_SOURCE_DIR}/third_party/cmark-gfm/extensions"
+        "${CMAKE_BINARY_DIR}/third_party/cmark-gfm/extensions")
+
+target_link_libraries(markdownplusplus_core PUBLIC
+    libcmark-gfm-extensions_static
+    libcmark-gfm_static
+    shlwapi)
+
+if(MSVC)
+    target_compile_options(markdownplusplus_core PRIVATE /W4 /permissive-)
+endif()
+
 add_library(MarkdownPlusPlus MODULE
     src/ClipboardUtil.cpp
     src/ClipboardUtil.h
-    src/HtmlUtil.cpp
-    src/HtmlUtil.h
     src/MarkdownPlusPlus.rc
-    src/MarkdownRenderer.cpp
-    src/MarkdownRenderer.h
     src/NppApi.h
-    src/PluginOptions.cpp
-    src/PluginOptions.h
     src/PluginController.cpp
     src/PluginController.h
     src/PluginExports.cpp
@@ -56,8 +95,6 @@ add_library(MarkdownPlusPlus MODULE
     src/PreviewWindow.h
     src/WebViewHost.cpp
     src/WebViewHost.h
-    src/WinUtil.cpp
-    src/WinUtil.h
     src/resource.h)
 
 target_compile_features(MarkdownPlusPlus PRIVATE cxx_std_20)
@@ -78,6 +115,7 @@ target_include_directories(MarkdownPlusPlus PRIVATE
     "${CMAKE_BINARY_DIR}/third_party/cmark-gfm/extensions")
 
 target_link_libraries(MarkdownPlusPlus PRIVATE
+    markdownplusplus_core
     "${MARKDOWNPP_WEBVIEW2_ROOT}/x64/WebView2LoaderStatic.lib"
     libcmark-gfm-extensions_static
     libcmark-gfm_static
@@ -122,3 +160,7 @@ install(TARGETS MarkdownPlusPlus
     LIBRARY DESTINATION MarkdownPlusPlus)
 
 install(DIRECTORY assets DESTINATION MarkdownPlusPlus)
+
+if(MARKDOWNPP_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

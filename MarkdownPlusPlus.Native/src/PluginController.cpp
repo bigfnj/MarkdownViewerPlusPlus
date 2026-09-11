@@ -385,8 +385,9 @@ void PluginController::ExportPdf() {
         L"Export Markdown++ PDF",
         L"PDF Files (*.pdf)\0*.pdf\0All Files (*.*)\0*.*\0",
         L"pdf");
-    if (!path.empty()) {
-        previewWindow_.PrintToPdf(path);
+    if (!path.empty() && !previewWindow_.PrintToPdf(path)) {
+        MessageBoxW(nppData_._nppHandle,
+                    L"Markdown++ could not start the PDF export.", kPluginName, MB_OK | MB_ICONERROR);
     }
 }
 
@@ -411,7 +412,10 @@ void PluginController::PrintPreview() {
         return;
     }
 
-    previewWindow_.ShowPrintUi();
+    if (!previewWindow_.ShowPrintUi()) {
+        MessageBoxW(nppData_._nppHandle,
+                    L"Markdown++ could not open the print dialog.", kPluginName, MB_OK | MB_ICONERROR);
+    }
 }
 
 void PluginController::ShowAbout() {

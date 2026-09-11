@@ -4,6 +4,105 @@ Repo-level backlog: installer, release, packaging, and dependencies. The plugin
 *feature* backlog lives in
 [`MarkdownPlusPlus.Native/BACKLOG.md`](MarkdownPlusPlus.Native/BACKLOG.md).
 
+## Post-fix audit (2026-09-11) — including a regression in the fix itself
+
+A full read-only audit run after `52dc53d` landed, told to skip everything already fixed or
+recorded. **Its single most valuable finding was a regression introduced by `52dc53d` itself**,
+which is the argument for auditing your own work rather than only the code you inherited.
+
+### Fixed
+
+- 🔴 **REGRESSION from `52dc53d`: the message overlay was muted, not just unstuck.** `HideMessage()`
+  called `ShowWindow(SW_HIDE)`, but `ShowMessage()` never called `SW_SHOW` — the overlay had only
+  ever been visible because it was created `WS_VISIBLE`. So after the first successful navigation
+  hid it, every later error wrote text into a hidden window: "print requires a newer WebView2
+  Runtime", "could not open the print dialog", "could not start PDF export", "could not attach to
+  the WebView2 preview" — all silently swallowed, and README's troubleshooting table promised a
+  dark-grey panel that could no longer appear twice in one session. Now shows and raises the
+  overlay explicitly.
+- 🔴 **`PathToFileUri` returned `""` for every input, so HTML export was quietly broken.** Its size
+  probe passed a NULL buffer to `UrlCreateFromPathW` and demanded `E_POINTER` back; that call
+  answers `E_INVALIDARG` to a NULL buffer, so the early return always fired. Every caller in
+  `BuildStandaloneDocument` is behind an `if (!uri.empty())`, so an exported HTML file silently
+  shipped with **no `preview.js`, no `mermaid.min.js` and no `<base href>`** — no diagrams, no
+  anchors, and every relative image broken, with no error shown. Now probes with a real buffer and
+  grows only on request. Three tests that pinned this as a known bug have been promoted to real
+  regression tests.
+- 🟠 **`NavigateToString`'s HRESULT was discarded and its documented 2 MB limit unchecked.** Past
+  the ceiling the call fails, `documentLoaded_` is already false, and every later render retakes
+  the same failing path: a permanently blank pane with no message. `CMARK_OPT_SOURCEPOS` puts a
+  `data-sourcepos` attribute on every block, so the HTML runs well above the markdown size and the
+  limit arrives sooner than you would guess. Now size-checked, HRESULT-checked, and reported.
+- 🟠 **`ExecuteScript`'s synchronous HRESULT was discarded and the function returned `true`
+  regardless.** If the script cannot be queued the completion lambda never runs, so the
+  `documentLoaded_ = false` recovery never fires — while the caller has been told the update
+  applied. The same failure shape as the `replaceContent` bug, one layer up.
+- 🟠 **`SetVirtualHostNameToFolderMapping`'s HRESULT was discarded.** If it fails, `preview.css`,
+  `preview.js` and `mermaid.min.js` all 404 under the page's `default-src 'none'` CSP and the
+  preview renders as unstyled text with no scroll sync, links or diagrams — with nothing saying why.
+- 🟠 **Print and PDF failures were completely invisible**: both return `bool` and both results were
+  dropped, so a failure produced no dialog, no message and no log.
+- 🟠 **Uninitialised `COREWEBVIEW2_PROCESS_FAILED_KIND`** read into the one diagnostic that exists
+  for a crashed WebView2.
+
+### Added: the repo's first automated tests
+
+`MarkdownPlusPlus.Native/tests/` — a dependency-free harness, **44 tests in 6 CTest targets, all
+green**, over the genuinely pure units (`MarkdownRenderer`, `PluginOptionsStore`, `WinUtil`,
+`HtmlUtil`). Two properties worth preserving:
+
+- `MDPP_KNOWN_BUG_TEST` pins a bug with its reason and **fails when every assertion starts
+  passing**, i.e. it alarms on unexpected success and tells you to promote it. That is how the
+  `PathToFileUri` fix was confirmed rather than assumed.
+- The suite refuses to look clean while degraded: a filter matching nothing is an error, and the
+  known-bug count is printed on every run. `--known-bugs` selecting zero is the one deliberate
+  exception, since that is the end state the mechanism exists to reach.
+
+**It cannot catch a render-pipeline regression.** `PluginController` and `WebViewHost` need a live
+Notepad++ and WebView2 and are untested; `tests/README.md` says so explicitly.
+
+### Open, from the audit
+
+- 🟡 **`DebugLog` coverage is still thin** — three call sites, all in `WebViewHost.cpp`. Unlogged:
+  both `ApplyPending*` early returns, an empty `ReadCurrentBufferUtf8`, a failed `WriteUtf8File`.
+  README's "every message marks a failure path" is true; the converse is not yet.
+- 🟡 **Version drift**: About says 1.1.0 and the `.rc` says `1,1,0,0` while `CMakeLists` says 1.2.0.
+  Generate both from `${PROJECT_VERSION}` so the existing tag-vs-CMake check covers them.
+- 🟡 **Per-render waste on the typing path.** The rendered body is copied ~7 times per render, and
+  on the steady-state in-place path the entire `document` string is built and then never read —
+  roughly 1.5 MB of pointless memcpy per keystroke on a 100 KB file. `GetNotepadString` also
+  zero-fills 64 KB per call, twice per render. The `ExecuteScript` reserve under-counts because
+  escaping roughly doubles the HTML.
+- 🟡 **`CombinePath` truncates silently** at `MAX_PATH` and discards `PathAppendW`'s result; it is
+  on the asset-root, config and link-resolution paths. `CanonicalizeWindowsPath` uses
+  `PathCanonicalizeW`, which MSDN explicitly recommends against, with an input that is not bounded
+  to `MAX_PATH`.
+- 🟡 **`UrlDecode` mis-decodes percent-encoded UTF-8** (`UrlUnescapeW` yields one `wchar_t` per
+  `%XX`), so a local link written by any tool that encodes non-ASCII filenames never opens.
+- 🟡 **`preview.js` heading ids**: `slugifyHeading` uses ASCII-only `\w`, so no heading in a
+  non-English document ever gets an id and no intra-document anchor works there;
+  `assignHeadingIds` can also mint a duplicate id when a heading already has one.
+- 🟡 **The in-place path is taken for empty renders**, so a whitespace-only file does a full
+  page reload on every debounce tick.
+- 🟡 **CSP allows bare `img-src https:`**, so opening an untrusted markdown file fetches remote
+  images and leaks the reader's IP. Every other directive there is tight.
+- 🟡 **Five `EventRegistrationToken` members are written and never read**; `Destroy()` makes no
+  `remove_*` calls. Safe only because `Close()` runs first.
+- 🟡 **Two window classes are registered and never unregistered**, so on DLL unload they point at
+  unmapped memory.
+- ⚪ **Dead code**: `SetScrollRatio` (whole two-layer chain, no callers), `BuildDocument` (only
+  caller is a test asserting it equals `BuildPreview().document`), `PreviewScrollFallbackRatio`'s
+  true branch (unreachable), `MessageProc`'s identical if/else, `StartPrintToPdf`'s discarded
+  return, `CopyHtmlToClipboard`'s `plainText` parameter (always the same value as `articleHtml`),
+  `SC_UPDATE_CONTENT`, the `std::string` `DebugLog` overload, `<cstdlib>`, and three `preview.js`
+  exports the host never calls.
+- ⚪ **Confirmed CLEAN** and worth not re-auditing: COM out-param ownership on every path;
+  `SetTimer`/`KillTimer`, subclass, and `CoInitializeEx` pairing; the clipboard `GlobalAlloc`
+  path; the JSON mini-parsers; `Utf8ToWide`/`WideToUtf8` including embedded NULs and surrogates;
+  cmark-gfm node/buffer lifecycle; scroll-sync suppression (no stuck state possible). Notably
+  **`ReadCurrentBufferUtf8` is correct** under both Scintilla 4 and 5 semantics — it was a prime
+  suspect for the blank preview and is not the cause.
+
 ## Preview blank-pane investigation (2026-09-11)
 
 A user report: "a markdown file will NOT render on the right, sometimes even closing notepad++
