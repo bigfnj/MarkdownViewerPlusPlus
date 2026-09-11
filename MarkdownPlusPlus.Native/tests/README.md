@@ -68,8 +68,9 @@ OBJECT library, and linked by both `MarkdownPlusPlus` (the DLL) and
   or the key is absent, the debounce clamp on both the read and the write path,
   and the section name.
 - `Utf8ToWide` / `WideToUtf8` including embedded NULs and invalid input,
-  `CombinePath`, `PathToFileUri`, `ReadUtf8FileAsWide` / `WriteUtf8File`,
-  `GetModuleDirectory`.
+  `CombinePath`, `PathToFileUri` (encoding, trailing slash, NUL trimming, and a
+  path long enough to force its `E_POINTER` retry), `ReadUtf8FileAsWide` /
+  `WriteUtf8File`, `GetModuleDirectory`.
 
 ## What is NOT covered
 
@@ -93,6 +94,17 @@ the only thing that checks that, and it is still manual.
 Also not covered: `preview.js` and `preview.css` (no JavaScript test runner in
 this repo), the installer, and anything to do with 32-bit or non-Windows builds.
 
+Two things inside the units that *are* covered still have no reachable test:
+
+- `PathToFileUri`'s `FAILED(result)` branch. `UrlCreateFromPathW` succeeded on
+  every input tried against it, including relative paths, UNC paths, device
+  paths, control characters and a 6000-character path, so nothing in the suite
+  reaches that `return {}`. Mutating it to `return path` produces no failure.
+- `CombinePath`'s overflow behaviour. Its buffer is `MAX_PATH`, and when
+  `left + "\" + right` would exceed it `PathAppendW` fails and leaves the buffer
+  **empty** - so the function returns `""`, not a truncated path. No assertion
+  pins that, because pinning it would freeze a bug rather than a contract.
+
 ## Known product bugs parked in the suite
 
 `MDPP_KNOWN_BUG_TEST` marks a test that asserts the *correct* behaviour of
@@ -103,16 +115,18 @@ output. If the underlying bug is fixed, the test turns **red** with a message
 telling you to promote it to a plain `MDPP_TEST` - a parked test cannot rot into
 a permanent exception.
 
-Currently parked:
+**Currently parked: none.** `MarkdownPlusPlus_tests --known-bugs` says so
+explicitly rather than printing nothing, so the CTest entry that watches for that
+banner stays green on the clean end state and goes red only on silence.
 
-- `winutil.PathToFileUriEncodesAndNormalises`,
-  `renderer.StandaloneDocumentLinksLocalAssets`,
-  `renderer.StandaloneDocumentBaseHrefPointsAtTheDocumentFolder` -
-  `WinUtil::PathToFileUri` returns an empty string for every input. Its sizing
-  probe calls `UrlCreateFromPathW` with a null output buffer, which answers
-  `E_INVALIDARG` (0x80070057) instead of the `E_POINTER` the guard expects, so
-  the early return always fires. Exported HTML consequently has no `preview.js`,
-  no `mermaid.min.js` and no `<base href>`.
+The mechanism has been through one full cycle already. The suite's first run
+found that `WinUtil::PathToFileUri` returned an empty string for *every* input -
+its sizing probe called `UrlCreateFromPathW` with a null output buffer, which
+answers `E_INVALIDARG` (0x80070057) rather than the `E_POINTER` the guard
+demanded, so the early return always fired. Exported HTML therefore had no
+`preview.js`, no `mermaid.min.js` and no `<base href>`, with no error anywhere.
+Three tests were parked against it; the fix landed the same day and all three
+were promoted.
 
 ## Adding a test
 

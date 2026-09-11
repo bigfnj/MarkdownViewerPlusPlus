@@ -47,8 +47,8 @@ which is the argument for auditing your own work rather than only the code you i
 
 ### Added: the repo's first automated tests
 
-`MarkdownPlusPlus.Native/tests/` — a dependency-free harness, **44 tests in 6 CTest targets, all
-green**, over the genuinely pure units (`MarkdownRenderer`, `PluginOptionsStore`, `WinUtil`,
+`MarkdownPlusPlus.Native/tests/` — a dependency-free harness, **45 tests / 209 assertions in 6
+CTest targets, all green**, over the genuinely pure units (`MarkdownRenderer`, `PluginOptionsStore`, `WinUtil`,
 `HtmlUtil`). Two properties worth preserving:
 
 - `MDPP_KNOWN_BUG_TEST` pins a bug with its reason and **fails when every assertion starts
@@ -57,6 +57,13 @@ green**, over the genuinely pure units (`MarkdownRenderer`, `PluginOptionsStore`
 - The suite refuses to look clean while degraded: a filter matching nothing is an error, and the
   known-bug count is printed on every run. `--known-bugs` selecting zero is the one deliberate
   exception, since that is the end state the mechanism exists to reach.
+
+**Mutation-tested, 45 mutations with 43 detected.** The two survivors are reported in
+`tests/README.md` rather than papered over, and one earlier "survivor" turned out to be a false
+negative in the mutation driver itself — MSBuild skipped a recompile for a header edited
+milliseconds after the previous build, so the mutant was never compiled. Re-run with
+`--clean-first` it was detected. Only SURVIVED verdicts were ever at risk from that; a detected
+verdict cannot be fabricated by a stale build.
 
 **It cannot catch a render-pipeline regression.** `PluginController` and `WebViewHost` need a live
 Notepad++ and WebView2 and are untested; `tests/README.md` says so explicitly.
@@ -73,10 +80,23 @@ Notepad++ and WebView2 and are untested; `tests/README.md` says so explicitly.
   roughly 1.5 MB of pointless memcpy per keystroke on a 100 KB file. `GetNotepadString` also
   zero-fills 64 KB per call, twice per render. The `ExecuteScript` reserve under-counts because
   escaping roughly doubles the HTML.
-- 🟡 **`CombinePath` truncates silently** at `MAX_PATH` and discards `PathAppendW`'s result; it is
-  on the asset-root, config and link-resolution paths. `CanonicalizeWindowsPath` uses
-  `PathCanonicalizeW`, which MSDN explicitly recommends against, with an input that is not bounded
-  to `MAX_PATH`.
+- 🟡 **`CombinePath` returns an EMPTY string on overflow, not a truncated one.** Corrected from
+  the audit's "truncates silently" after it was measured against the live API: the buffer is
+  `MAX_PATH`, and when `left + "\" + right` would exceed it `PathAppendW` fails and *clears* the
+  buffer. A 255-character left operand already yields `""`. That is the worse failure of the two,
+  because it blanks the asset root rather than bending it, and the result is discarded unchecked.
+  On the asset-root, config and link-resolution paths. Latent only because the plugins directory
+  is short. No test pins it, deliberately — pinning current behaviour would freeze a bug rather
+  than a contract. `CanonicalizeWindowsPath` separately uses `PathCanonicalizeW`, which MSDN
+  explicitly recommends against, with an input not bounded to `MAX_PATH`.
+- 🟡 **`EscapeScriptString` does not escape `"`.** Safe at the only call site today
+  (`WebViewHost.cpp` builds single-quoted JS literals) and the tests pin that single-quote
+  contract, but it is a trap for anyone who switches quote style.
+- ⚪ **Two branches inside the tested units have no reachable input**, recorded in
+  `tests/README.md` rather than covered by a test that could not fail: `PathToFileUri`'s
+  `FAILED(result)` return (`UrlCreateFromPathW` succeeded on every input tried, including UNC,
+  device paths, control characters and a 6000-character path) and the specific "delete the guard"
+  mutation of `PluginOptionsStore::Load`'s empty-path check.
 - 🟡 **`UrlDecode` mis-decodes percent-encoded UTF-8** (`UrlUnescapeW` yields one `wchar_t` per
   `%XX`), so a local link written by any tool that encodes non-ASCII filenames never opens.
 - 🟡 **`preview.js` heading ids**: `slugifyHeading` uses ASCII-only `\w`, so no heading in a

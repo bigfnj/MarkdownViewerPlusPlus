@@ -105,6 +105,21 @@ MDPP_TEST(winutil, PathToFileUriEncodesAndNormalises) {
     MDPP_CHECK_EQ(PathToFileUri(L"C:\\temp\\dir\\"), std::wstring(L"file:///C:/temp/dir/"));
 }
 
+MDPP_TEST(winutil, PathToFileUriGrowsPastItsInitialBuffer) {
+    // Longer than kInitialUrlChars, so this only comes back whole if the E_POINTER
+    // retry runs. Without it the first call fails and the URI is silently empty -
+    // the same failure mode as the null-buffer probe that shipped before.
+    const std::wstring longPath = L"C:\\" + std::wstring(3000, L'd') + L"\\a.html";
+    const std::wstring uri = PathToFileUri(longPath);
+
+    MDPP_CHECK(!uri.empty());
+    MDPP_CHECK(uri.size() > 3000);
+    MDPP_CHECK(uri.rfind(L"file:///C:/", 0) == 0);
+    MDPP_CHECK_CONTAINS(uri, std::wstring(L"/a.html"));
+    // Trimmed at the NUL, not padded out to whatever the retry allocated.
+    MDPP_CHECK(uri.find(L'\0') == std::wstring::npos);
+}
+
 MDPP_TEST(winutil, FileRoundTripThroughUtf8) {
     mdpptest::TempDir temp;
     const std::wstring path = temp.File(L"round.txt");
