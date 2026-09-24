@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(MarkdownPlusPlus
-    VERSION 1.2.1
+    VERSION 1.3.0
     DESCRIPTION "Native Markdown++ Notepad++ plugin"
     LANGUAGES C CXX)
 

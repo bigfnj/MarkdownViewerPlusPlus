@@ -21,9 +21,9 @@ root:
 
 | Dependency | Version | Local path |
 |---|---:|---|
-| Microsoft.Web.WebView2 SDK | 1.0.4129.50 | `packages/Microsoft.Web.WebView2.1.0.4129.50` |
+| Microsoft.Web.WebView2 SDK | 1.0.4191.47 | `packages/Microsoft.Web.WebView2.1.0.4191.47` |
 | cmark-gfm | 0.29.0.gfm.13 | `third_party/cmark-gfm` |
-| Mermaid | 11.16.1 | `MarkdownPlusPlus.Native/assets/mermaid/mermaid.min.js` |
+| Mermaid | 12.0.0 | `MarkdownPlusPlus.Native/assets/mermaid/mermaid.min.js` |
 | NuGet CLI | latest at install time | `tools/nuget/nuget.exe` |
 
 To recreate the repo-local dependency install, run:

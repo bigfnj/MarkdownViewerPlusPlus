@@ -10,7 +10,7 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(FATAL_ERROR "Markdown++ native is currently x64-only. Configure CMake with -A x64.")
 endif()
 
-set(MARKDOWNPP_WEBVIEW2_VERSION "1.0.4129.50" CACHE STRING "Microsoft.Web.WebView2 native SDK version")
+set(MARKDOWNPP_WEBVIEW2_VERSION "1.0.4191.47" CACHE STRING "Microsoft.Web.WebView2 native SDK version")
 set(MARKDOWNPP_WEBVIEW2_ROOT
     "${CMAKE_SOURCE_DIR}/packages/Microsoft.Web.WebView2.${MARKDOWNPP_WEBVIEW2_VERSION}/build/native"
     CACHE PATH "Path to the Microsoft.Web.WebView2 native build folder")
