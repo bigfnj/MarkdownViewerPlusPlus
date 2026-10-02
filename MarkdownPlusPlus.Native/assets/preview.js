@@ -564,6 +564,279 @@
       });
   }
 
+  // ---------------------------------------------------------------------------
+  // Copy
+  //
+  // Chromium's default copy inlines the COMPUTED style of every selected node, which drags
+  // the preview's dark theme onto the clipboard: measured on 2026-10-02, a pane copy pasted
+  // into Word as rgb(230, 237, 243) text, i.e. near-white on a white page. Bold and italic
+  // survived; nobody could see them. Worse, it is not even consistent -- when the selection
+  // lets Chromium hoist the shared colour onto a wrapper span, Word discards the wrapper and
+  // the same copy pastes fine. Two shapes of one defect, decided by what you happened to select.
+  //
+  // So we serialise the selection ourselves. The preview DOM carries no inline styles (all
+  // styling lives in preview.css), so cloning it yields clean semantic markup and the paste
+  // target applies its own colours. The only styles added back are structural ones that no
+  // target supplies by itself, and none of them set a foreground colour.
+  var COPY_STRUCTURAL_STYLES = [
+    ["table", "border-collapse: collapse; margin: 8px 0;"],
+    ["th", "border: 1px solid #d0d7de; padding: 6px 13px; text-align: left;"],
+    ["td", "border: 1px solid #d0d7de; padding: 6px 13px;"],
+    ["pre", "background: #f6f8fa; padding: 12px; border-radius: 6px; white-space: pre;"],
+    ["blockquote", "border-left: 4px solid #d0d7de; margin: 8px 0; padding: 0 1em;"]
+  ];
+
+  // Inline tags worth rebuilding around a partial selection. Selecting three words inside a
+  // <strong> gives a range whose cloneContents() is a bare text node, so without this the
+  // emphasis would be lost -- a regression against the very behaviour we are fixing.
+  var COPY_INLINE_ANCESTORS = {
+    STRONG: true, B: true, EM: true, I: true, CODE: true, A: true,
+    DEL: true, S: true, SUP: true, SUB: true, MARK: true
+  };
+
+  function selectionToContainer(selection) {
+    var container = document.createElement("div");
+
+    for (var index = 0; index < selection.rangeCount; index++) {
+      container.appendChild(selection.getRangeAt(index).cloneContents());
+    }
+
+    if (selection.rangeCount !== 1) {
+      return container;
+    }
+
+    var node = selection.getRangeAt(0).commonAncestorContainer;
+    if (node && node.nodeType === 3) {
+      node = node.parentNode;
+    }
+
+    while (node && node.tagName && COPY_INLINE_ANCESTORS[node.tagName.toUpperCase()]) {
+      var wrapper = node.cloneNode(false);
+      while (container.firstChild) {
+        wrapper.appendChild(container.firstChild);
+      }
+      container.appendChild(wrapper);
+      node = node.parentNode;
+    }
+
+    return container;
+  }
+
+  // Ctrl+A selects the whole body, so the clone carries the page's own <script> elements.
+  // Their text leaked into the plain-text flavour as window.MarkdownPlusPlusOptions={...}.
+  function stripNonContentNodes(container) {
+    Array.prototype.slice.call(container.querySelectorAll("script, style, noscript, template"))
+      .forEach(function (node) {
+        if (node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+      });
+  }
+
+  // A rendered diagram is an <svg>, and pasting raw inline SVG makes a mess: Word turned one
+  // diagram into three 15x11pt broken shapes while still rendering the node labels as stray
+  // text. Word 2016+, Outlook and OneNote do render an <img> whose source is an SVG data URI,
+  // so hand them that instead. The text flavour carries the Mermaid source separately.
+  function mermaidBlockToImage(block) {
+    var svg = block.querySelector("svg");
+    if (!svg) {
+      return null;
+    }
+
+    var clone = svg.cloneNode(true);
+    if (!clone.getAttribute("xmlns")) {
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    }
+
+    var image = document.createElement("img");
+    var viewBox = (clone.getAttribute("viewBox") || "").split(/[\s,]+/);
+    if (viewBox.length === 4) {
+      var width = Math.round(Number(viewBox[2]));
+      var height = Math.round(Number(viewBox[3]));
+      if (width > 0 && height > 0) {
+        image.setAttribute("width", String(width));
+        image.setAttribute("height", String(height));
+      }
+    }
+
+    try {
+      var markup = new XMLSerializer().serializeToString(clone);
+      image.setAttribute("src", "data:image/svg+xml;charset=utf-8," + encodeURIComponent(markup));
+    } catch (_) {
+      return null;
+    }
+
+    return image;
+  }
+
+  function replaceMermaidBlocks(container) {
+    Array.prototype.slice.call(container.querySelectorAll("pre.mermaid"))
+      .forEach(function (block) {
+        var replacement = mermaidBlockToImage(block);
+        if (!replacement) {
+          // Not rendered, or serialisation failed. The textContent is the Mermaid source in
+          // that case, which is better in a paste than an empty hole.
+          return;
+        }
+        if (block.parentNode) {
+          block.parentNode.replaceChild(replacement, block);
+        }
+      });
+  }
+
+  function buildCopyHtml(container) {
+    stripNonContentNodes(container);
+    replaceMermaidBlocks(container);
+
+    Array.prototype.slice.call(container.querySelectorAll("[data-sourcepos]"))
+      .forEach(function (node) {
+        node.removeAttribute("data-sourcepos");
+      });
+
+    COPY_STRUCTURAL_STYLES.forEach(function (rule) {
+      Array.prototype.slice.call(container.querySelectorAll(rule[0]))
+        .forEach(function (node) {
+          var existing = node.getAttribute("style");
+          node.setAttribute("style", existing ? existing + ";" + rule[1] : rule[1]);
+        });
+    });
+
+    return container.innerHTML;
+  }
+
+  function collapseInlineWhitespace(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  // Block elements that own their text. Anything else that contains element children is a
+  // wrapper to descend through: a whole-document selection clones a single <article>, and
+  // treating that as one block collapsed the entire document onto one line.
+  var COPY_TEXT_LEAF_BLOCKS = {
+    P: true, H1: true, H2: true, H3: true, H4: true, H5: true, H6: true,
+    PRE: true, TABLE: true, UL: true, OL: true, DL: true, HR: true
+  };
+
+  function blockToText(node, lines) {
+    if (node.nodeType === 3) {
+      var raw = collapseInlineWhitespace(node.nodeValue);
+      if (raw) {
+        lines.push(raw);
+      }
+      return;
+    }
+
+    if (node.nodeType !== 1) {
+      return;
+    }
+
+    var tag = node.tagName ? node.tagName.toUpperCase() : "";
+
+    if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "TEMPLATE") {
+      return;
+    }
+
+    if (tag === "HR") {
+      lines.push("---");
+      return;
+    }
+
+    if (!COPY_TEXT_LEAF_BLOCKS[tag] &&
+        !(tag === "PRE" && node.classList && node.classList.contains("mermaid")) &&
+        node.children.length > 0) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+        blockToText(child, lines);
+      });
+      return;
+    }
+
+    if (tag === "PRE" && node.classList && node.classList.contains("mermaid")) {
+      // The rendered diagram is an <svg>, whose textContent is the node labels run together.
+      // The source is already parked on the element by renderMermaidBlock, and it is what a
+      // reader of a plain-text paste can actually use.
+      var source = node.getAttribute("data-mermaid-source");
+      if (source) {
+        lines.push(source);
+      }
+      return;
+    }
+
+    if (tag === "UL" || tag === "OL") {
+      var items = Array.prototype.slice.call(node.children).map(function (item, index) {
+        var marker = tag === "OL" ? (index + 1) + ". " : "- ";
+        return marker + collapseInlineWhitespace(item.textContent);
+      });
+      if (items.length > 0) {
+        lines.push(items.join("\n"));
+      }
+      return;
+    }
+
+    if (tag === "TABLE") {
+      var rows = Array.prototype.slice.call(node.querySelectorAll("tr")).map(function (row) {
+        return Array.prototype.slice.call(row.children).map(function (cell) {
+          return collapseInlineWhitespace(cell.textContent);
+        }).join("\t");
+      });
+      if (rows.length > 0) {
+        lines.push(rows.join("\n"));
+      }
+      return;
+    }
+
+    if (tag === "PRE") {
+      lines.push(String(node.textContent || "").replace(/\s+$/, ""));
+      return;
+    }
+
+    var text = collapseInlineWhitespace(node.textContent);
+    if (text) {
+      lines.push(text);
+    }
+  }
+
+  // Chromium's plain-text flavour joins a heading straight onto the paragraph below it with a
+  // single newline, which is where "everything is clumped together" comes from in targets that
+  // strip HTML. Block elements get a blank line between them here.
+  function buildCopyText(container) {
+    var lines = [];
+
+    Array.prototype.slice.call(container.childNodes).forEach(function (child) {
+      blockToText(child, lines);
+    });
+
+    if (lines.length === 0) {
+      return collapseInlineWhitespace(container.textContent);
+    }
+
+    return lines.join("\n\n");
+  }
+
+  function handleCopy(event) {
+    if (!event.clipboardData) {
+      return;
+    }
+
+    var selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return;
+    }
+
+    var container = selectionToContainer(selection);
+    if (!container.textContent && !container.querySelector("img, svg")) {
+      return;
+    }
+
+    var text = buildCopyText(container);
+    var html = buildCopyHtml(container);
+    if (!html) {
+      return;
+    }
+
+    event.clipboardData.setData("text/html", '<meta charset="utf-8">' + html);
+    event.clipboardData.setData("text/plain", text);
+    event.preventDefault();
+  }
+
   window.MarkdownPlusPlusPreview = {
     scrollToRatio: scrollToRatio,
     scrollToSourceLine: scrollToSourceLine,
@@ -650,4 +923,5 @@
   window.addEventListener("scroll", queueScrollNotification, { passive: true });
   document.addEventListener("click", handleLinkClick);
   document.addEventListener("auxclick", handleLinkClick);
+  document.addEventListener("copy", handleCopy);
 })();

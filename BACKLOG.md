@@ -4,6 +4,95 @@ Repo-level backlog: installer, release, packaging, and dependencies. The plugin
 *feature* backlog lives in
 [`MarkdownPlusPlus.Native/BACKLOG.md`](MarkdownPlusPlus.Native/BACKLOG.md).
 
+## Preview copy loses formatting on paste (2026-10-02) — fixed for 1.4.0
+
+Reported as: copying from the preview pane and pasting "loses all of the formatting, everything
+is clumped together, I lose the bold and italics". The standing workaround was to export HTML,
+open it, and copy from there.
+
+**Two plausible diagnoses were killed by measurement before anything was written.** Neither the
+missing-HTML-flavour theory nor the Notepad++-steals-Ctrl+C theory survived. A driven Notepad++
+plus a real Word paste (`tools/measure-preview-copy.ps1`) showed the pane copy already produced
+a well-formed `HTML Format` payload with `<strong>` and `<em>` intact, and that Ctrl+C reaches
+the WebView perfectly well. Right-click Copy failing too had already ruled out the accelerator.
+
+### What it actually was
+
+Chromium's default copy inlines the **computed** style of every selected node, so the preview's
+dark theme rode along. Measured: a pane copy pasted into Word as `colorBGR=15986150`, which is
+`rgb(230, 237, 243)` — near-white text on a white page. Bold and italic were present the whole
+time and invisible. Targets that strip inline styles (Teams, Confluence) fell back to the
+plain-text flavour, where Chromium joins a heading to the next block with a single newline, which
+is the "clumped together" half of the report.
+
+**The defect has two shapes and that nearly hid it.** Depending on the selection, Chromium either
+inlines the colour per element (Word honours it, text invisible) or hoists it onto a wrapper span
+(Word discards the wrapper, paste looks fine). Two consecutive runs disagreed for exactly this
+reason. A check that only looks at what Word ended up with can therefore pass while the defect is
+live — confirmed by mutation, see below.
+
+### Fixed
+
+- 🔴 **`preview.js` now owns the copy.** A `copy` handler serialises the selection from the
+  preview DOM, which carries no inline styles because all styling lives in `preview.css`. The
+  paste target applies its own colours. Only structural styles are added back (table borders,
+  code and blockquote framing) and none of them set a foreground colour. Partial selections
+  inside `<strong>`, `<em>`, `<code>` and friends are re-wrapped in their inline ancestors, since
+  `cloneContents()` on such a range returns a bare text node and would otherwise have dropped the
+  emphasis — a regression against the very thing being fixed.
+- 🟠 **Plain-text flavour is now readable.** Blocks are separated by a blank line, list items get
+  markers, table rows are tab-separated, and a Mermaid block emits its **source** rather than the
+  rendered SVG's node labels run together.
+- 🟠 **Page `<script>` content no longer leaks into a copy.** `Ctrl+A` selects the whole body, so
+  the first version of the text walker emitted
+  `window.MarkdownPlusPlusOptions={mermaidEnabled:true};` at the end of every full-document copy.
+  Caught by measurement, not by review.
+- 🟡 **The text walker descended nothing.** A whole-document selection clones a single
+  `<article>`, so iterating top-level children collapsed the entire document onto one line. The
+  first fix changed nothing user-visible and the measurement said so.
+
+### Verified
+
+`tools/measure-preview-copy.ps1`, 12 checks, all passing against the installed 1.4.0 build:
+theme colour absent from the payload, emphasis present as markup, no script leak, blocks
+separated, Mermaid source present, and Word reporting `bold=-1`, `italic=-1`, one real table and
+automatic text colour.
+
+**Mutation-tested.** Disabling the copy handler in the *installed* asset turned the gate red on 3
+of 12 checks, naming the theme colour first. One check, "pasted text uses the target document
+colour", **passed while the defect was live** because that selection let Chromium hoist the colour
+onto a wrapper Word then dropped. It is kept as corroboration with a comment saying exactly that;
+the payload check is the one that fails every time.
+
+### Open
+
+- 🟡 **Diagrams do not paste as pictures.** Deliberate, decided 2026-10-02. Word's HTML paste
+  accepts a PNG data URI (produces a real `wdInlineShapePicture`) and rejects an SVG one
+  (produces nothing), measured directly with a synthetic clipboard payload. The copy therefore
+  emits the diagram SVG as an `<img>`, which SVG-capable targets draw and Word does not. Making
+  it work everywhere means rasterising each rendered diagram to PNG and caching it on the element,
+  because the `copy` event is synchronous and canvas work is not. That adds work to a render path
+  with a history of blank-pane bugs and no test coverage, so it was deferred rather than bundled
+  into this release. Prior behaviour was worse: Word made three broken 15x11pt shapes and leaked
+  the node labels as stray text.
+- ⚪ Only **Word** was measured on the paste side. Outlook, Teams, OneNote and Confluence were
+  named in the report but not instrumented. The payload is standard semantic HTML, so they should
+  behave, but that is reasoning rather than evidence.
+
+## A bumped dependency pin did nothing locally (2026-10-02)
+
+`MARKDOWNPP_WEBVIEW2_VERSION` was a `CACHE STRING`, and `set(... CACHE ...)` never overwrites an
+existing cache entry. So the 1.0.4129.50 -> 1.0.4191.47 bump that shipped in **v1.3.0 was ignored
+by every configure into an existing build directory**, which kept compiling against 1.0.4129.50
+and said nothing. Found by reading `CMakeCache.txt` after the v1.3.0 pull, where the cached value
+was still the pre-pull one.
+
+CI configures from scratch on every run, so CI matched the file and the divergence was invisible
+from both sides. `MarkdownPlusPlus.Native/CMakeLists.txt` now holds the pin in a plain variable
+and fails configure when the build directory disagrees, with `-DMARKDOWNPP_ALLOW_WEBVIEW2_PIN_MISMATCH=ON`
+as the deliberate escape. Mutation-tested against the genuinely stale directory that revealed it:
+one error, naming the file, printing both versions and both roots.
+
 ## Post-fix audit (2026-09-11) — including a regression in the fix itself
 
 A full read-only audit run after `52dc53d` landed, told to skip everything already fixed or
@@ -266,6 +355,14 @@ adding another check.
 
 ## Dependencies
 
-- Check pins with `python tools/check-deps.py` (pinned vs. latest upstream).
-- As of 2026-08-06: Mermaid **11.16.1**, WebView2 SDK **1.0.4129.50**, cmark-gfm
+- Check pins with `python tools/check-deps.py` (pinned vs. latest upstream). Run it with
+  `-X utf8` on Windows or it dies on the arrow glyph it prints.
+- As of 2026-10-02: Mermaid **12.1.0**, WebView2 SDK **1.0.4258.31**, cmark-gfm
   **0.29.0.gfm.13** (current — GitHub has not published a newer release).
+- **Mermaid 12 is render-verified.** v1.3.0 moved Mermaid across a major version (11.16.1 ->
+  12.0.0) with no code change and no diagram ever rendered from the result. Checked on
+  2026-10-02 at 12.1.0: the bundle still assigns `globalThis["mermaid"]`, still exports
+  `initialize` / `parse` / `run` / `render`, and a `graph TD` fixture renders to a real SVG in
+  the pane. Bumping Mermaid needs a rendered diagram, not a successful build.
+- Bumping the WebView2 pin does nothing in an existing build directory on its own. See
+  "A bumped dependency pin did nothing locally" above.

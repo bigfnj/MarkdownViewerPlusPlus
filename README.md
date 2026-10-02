@@ -43,6 +43,11 @@ becomes a rendered flowchart in the preview, with no network access required.
 
 **Export and output**
 
+- Select text in the preview and copy it with `Ctrl+C`. The selection goes onto the clipboard as
+  formatted HTML alongside a readable plain-text version, so it pastes into a word processor with
+  its formatting intact. Verified against Microsoft Word: bold, italics, inline code and markdown
+  tables all survive, and pasted text takes the colour of the document you paste into rather than
+  the preview's theme.
 - Copy the rendered HTML to the clipboard.
 - Export a standalone HTML file with working fragment jumps.
 - Export a standalone PDF.
@@ -146,6 +151,14 @@ Worth knowing what a blank pane looks like, because the three causes paint diffe
 | Empty, in your editor's theme colour | The document was replaced or never applied. `Ctrl+Alt+R` fixes it. |
 | Dark grey with a line of text | A WebView2 status message. Read it — it carries the real error. |
 | Flat system white | WebView2 did not start. Check the Edge WebView2 Runtime is installed. |
+
+### A copied diagram does not paste as a picture
+
+Mermaid diagrams render as SVG. Copying one puts that SVG on the clipboard, which targets that
+support SVG will draw and Microsoft Word will not: Word's HTML paste accepts a PNG data URI and
+rejects an SVG one, measured directly. In Word you get a placeholder where the diagram should be.
+The plain-text flavour carries the diagram's Mermaid source, so the definition itself is never
+lost. Export to HTML or PDF when you need the rendered picture.
 
 ### The preview never opens for a file
 

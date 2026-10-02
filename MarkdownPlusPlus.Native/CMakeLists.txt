@@ -10,10 +10,39 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(FATAL_ERROR "Markdown++ native is currently x64-only. Configure CMake with -A x64.")
 endif()
 
-set(MARKDOWNPP_WEBVIEW2_VERSION "1.0.4191.47" CACHE STRING "Microsoft.Web.WebView2 native SDK version")
+# The pin, held in a plain variable on purpose. `set(... CACHE ...)` never overwrites an
+# existing cache entry, so bumping the version below has NO effect in a build directory that
+# already exists. That is measured, not theoretical: the 1.0.4129.50 -> 1.0.4191.47 bump that
+# shipped in v1.3.0 was ignored by every local configure into an existing build directory, which
+# kept compiling against 1.0.4129.50 and said nothing. CI configures from scratch on every run,
+# so CI matched the file and the divergence was invisible from both sides.
+set(MARKDOWNPP_WEBVIEW2_PINNED_VERSION "1.0.4258.31")
+
+set(MARKDOWNPP_WEBVIEW2_VERSION "${MARKDOWNPP_WEBVIEW2_PINNED_VERSION}"
+    CACHE STRING "Microsoft.Web.WebView2 native SDK version")
 set(MARKDOWNPP_WEBVIEW2_ROOT
     "${CMAKE_SOURCE_DIR}/packages/Microsoft.Web.WebView2.${MARKDOWNPP_WEBVIEW2_VERSION}/build/native"
     CACHE PATH "Path to the Microsoft.Web.WebView2 native build folder")
+
+set(MARKDOWNPP_WEBVIEW2_EXPECTED_ROOT
+    "${CMAKE_SOURCE_DIR}/packages/Microsoft.Web.WebView2.${MARKDOWNPP_WEBVIEW2_PINNED_VERSION}/build/native")
+
+if(NOT MARKDOWNPP_ALLOW_WEBVIEW2_PIN_MISMATCH)
+    cmake_path(COMPARE "${MARKDOWNPP_WEBVIEW2_ROOT}" EQUAL "${MARKDOWNPP_WEBVIEW2_EXPECTED_ROOT}"
+        MARKDOWNPP_WEBVIEW2_ROOT_MATCHES_PIN)
+    if(NOT MARKDOWNPP_WEBVIEW2_ROOT_MATCHES_PIN)
+        message(FATAL_ERROR
+            "WebView2 SDK pin and this build directory disagree.\n"
+            "  pinned here:  ${MARKDOWNPP_WEBVIEW2_PINNED_VERSION}\n"
+            "  in use:       ${MARKDOWNPP_WEBVIEW2_VERSION}\n"
+            "  expected root: ${MARKDOWNPP_WEBVIEW2_EXPECTED_ROOT}\n"
+            "  cached root:   ${MARKDOWNPP_WEBVIEW2_ROOT}\n"
+            "A cached value wins over a bumped pin, so this directory would build against the "
+            "wrong SDK without reporting it. Delete ${CMAKE_BINARY_DIR} and configure again. "
+            "To target a different SDK deliberately, configure with "
+            "-DMARKDOWNPP_ALLOW_WEBVIEW2_PIN_MISMATCH=ON.")
+    endif()
+endif()
 
 if(NOT EXISTS "${MARKDOWNPP_WEBVIEW2_ROOT}/include/WebView2.h")
     message(FATAL_ERROR

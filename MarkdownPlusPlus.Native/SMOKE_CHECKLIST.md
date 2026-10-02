@@ -51,6 +51,20 @@ Use `smoke-tests\smoke-test.md`:
 
 ## Clipboard And Export
 
+Selection copy is covered by an automated check. It needs the plugin INSTALLED, not merely built,
+and it drives a real Notepad++ and a real Word:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\measure-preview-copy.ps1
+```
+
+It opens `smoke-tests\clipboard-copy.md`, copies from the pane, and asserts that the preview's
+theme colour does not reach the clipboard, that emphasis survives as markup, that the plain-text
+flavour keeps blocks apart, and that Word reports bold, italic and a real table on paste. Without
+Word it reports the paste half as NOT RUN and says the run is degraded rather than passing quietly.
+
+Still manual:
+
 - `Copy HTML to clipboard`: paste into an HTML-aware target and confirm rendered content. Paste into a plain-text target and confirm it is rendered HTML, not raw Markdown.
 - `Export HTML...`: open the generated file in a browser. Confirm styling, local image resolution, Mermaid rendering if enabled, and fragment-only `Jump to expected behavior`.
 - `Export PDF...`: open the generated PDF. Confirm it does not prompt for local `.md` permissions and does not contain `markdownplusplus.document` links for local Markdown files. External HTTPS and internal fragment links may remain clickable.

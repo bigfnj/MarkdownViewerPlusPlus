@@ -85,6 +85,31 @@ Likely files:
 - `SMOKE_CHECKLIST.md`
 - `README.md`
 
+### P2 - Paste Diagrams As Pictures
+
+Deferred deliberately on 2026-10-02, with the blocking fact already measured.
+
+Copying a Mermaid diagram emits its SVG as an `<img>`. Targets that support SVG draw it;
+Microsoft Word does not. A synthetic clipboard payload confirmed the asymmetry directly: a PNG
+data URI pastes into Word as a real `wdInlineShapePicture`, an SVG data URI pastes as nothing.
+
+Target behavior:
+
+- After each Mermaid render, draw the SVG onto a canvas and cache a PNG data URI on the block.
+- The `copy` handler emits that PNG when present, falling back to the SVG `<img>`.
+- Never block or slow the render path; the rasterisation has to be scheduled after render and
+  skipped for diagrams whose source has not changed.
+
+Why it was not bundled with 1.4.0: the `copy` event is synchronous and canvas work is not, so
+this cannot live inside the handler. It has to attach to the render pipeline, which is exactly
+the code with a history of blank-pane defects and no automated coverage.
+
+Likely files:
+
+- `assets/preview.js`
+- `tools/measure-preview-copy.ps1`
+- `SMOKE_CHECKLIST.md`
+
 ### P2 - Export Preferences
 
 Add optional export controls.
